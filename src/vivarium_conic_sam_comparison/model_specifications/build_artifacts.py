@@ -41,7 +41,3 @@ def build_model_spec(model_spec):
             create_and_run_job(p.resolve())
         else:
             logger.error(f'The file "{p}" does not exist')
-        
-        
-if __name__ == '__main__':
-    build_model_spec()
