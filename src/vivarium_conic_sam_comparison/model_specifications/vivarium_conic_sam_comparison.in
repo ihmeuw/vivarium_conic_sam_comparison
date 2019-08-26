@@ -39,7 +39,6 @@ components:
     vivarium_sam_comparison.components:
             - IronDeficiencyAnemia()
             - LBWSGRisk()
-            - NeonatalIntervention()
             - NeonatalPreterm()
             - LBWSGRiskEffect('cause.neonatal_sepsis_and_other_neonatal_infections.excess_mortality')
             - LBWSGRiskEffect('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.excess_mortality')
