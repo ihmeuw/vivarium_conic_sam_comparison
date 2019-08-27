@@ -56,4 +56,10 @@ if __name__ == "__main__":
         install_requires=install_requirements,
 
         zip_safe=False,
+
+        entry_points='''
+            [console_scripts]
+            pbuild_artifacts=vivarium_conic_sam_comparison.tools.cli:pbuild_artifacts
+            generate_spec_from_template=vivarium_conic_sam_comparison.tools.cli:generate_spec_from_template
+        '''
     )
