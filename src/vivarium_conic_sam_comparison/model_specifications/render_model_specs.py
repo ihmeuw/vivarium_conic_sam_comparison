@@ -5,7 +5,7 @@ from re import split
 import click
 
 # jinja2 template for generating model specifications
-TEMPLATE='vivarium_sam_comparison.in'
+TEMPLATE='vivarium_conic_sam_comparison.in'
 
 # name/location for the generated artifacts
 LOCATIONS=['India', 'Bangladesh', 'Pakistan', 'Malawi', 'Tanzania', 'Mali']
