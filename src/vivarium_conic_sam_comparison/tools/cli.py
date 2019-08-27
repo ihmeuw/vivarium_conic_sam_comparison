@@ -25,11 +25,11 @@ def create_and_run_job(model_spec_path: Path, output_root: Path):
 
 
 @click.command()
-@click.option('--model_spec', '-m', multiple=True, type=click.Path(exists=True),
+@click.option('--model_spec', '-m', multiple=True, type=click.Path(dir_okay=False, exists=True),
               help='Multiple model spec files can be provided. Each requires the option switch.')
 @click.option('--project_name', default='vivarium_conic_sam_comparison',
               help='The name of the research project. Used if no output root is provided.')
-@click.option('--output-root', '-o', type=click.Path(exists=True),
+@click.option('--output-root', '-o', type=click.Path(file_okay=False, exists=True),
               help='A directory root to store artifact results in.')
 def pbuild_artifacts(model_spec, project_name, output_root):
     """Build artifacts in parallel from model specifications. Supports multiple
@@ -51,7 +51,7 @@ def validate_locations(locations):
 
 
 @click.command()
-@click.argument('template', type=click.Path(exists=True))
+@click.argument('template', type=click.Path(dir_okay=False, exists=True))
 @click.argument('locations', nargs=-1)
 @click.option('--project_name', default='vivarium_conic_sam_comparison',
               help='The name of the research project.')
