@@ -10,9 +10,6 @@ components:
             - BasePopulation()
             - Mortality()
             - FertilityCrudeBirthRate()
-        metrics:
-            - Disability()
-            - MortalityObserver()
         disease.models:
             - SIS('diarrheal_diseases')
             - SIS('lower_respiratory_infections')
@@ -20,6 +17,8 @@ components:
             - NeonatalSWC_without_incidence('neonatal_sepsis_and_other_neonatal_infections')
             - NeonatalSWC_without_incidence('neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma')
             - NeonatalSWC_without_incidence('hemolytic_disease_and_other_neonatal_jaundice')
+        disease.special_disease:
+             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
         risks:
             - Risk('alternative_risk_factor.child_wasting')
             - RiskEffect('risk_factor.child_wasting', 'cause.diarrheal_diseases.incidence_rate')
@@ -36,7 +35,7 @@ components:
             - RiskEffect('risk_factor.child_underweight', 'cause.lower_respiratory_infections.incidence_rate')
             - RiskEffect('risk_factor.child_underweight', 'cause.measles.incidence_rate')
 
-    vivarium_sam_comparison.components:
+    vivarium_conic_sam_comparison.components:
             - IronDeficiencyAnemia()
             - LBWSGRisk()
             - NeonatalPreterm()
@@ -45,17 +44,6 @@ components:
             - LBWSGRiskEffect('cause.hemolytic_disease_and_other_neonatal_jaundice.excess_mortality')
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality')
             - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality')
-            
-    vivarium_public_health.metrics:
-        - Disability()
-        - MortalityObserver()
-        - CategoricalRiskObserver('risk_factor.child_wasting')
-        - CategoricalRiskObserver('risk_factor.child_stunting')
-        - CategoricalRiskObserver('risk_factor.child_underweight')
-        - CategoricalRiskObserver('risk_factor.low_birth_weight_and_short_gestation')
-        
-    vivarium_public_health.disease.special_disease:
-        - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
 
 {% set location = location.replace(" ", "_").replace("'", "").lower() %}
 configuration:
