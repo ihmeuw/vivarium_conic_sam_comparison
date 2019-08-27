@@ -73,6 +73,13 @@ configuration:
         age_start: 0
         age_end: 100
 
+    child_stunting:
+        category_thresholds: [7, 8, 9]
+    child_wasting:
+        category_thresholds: [7, 8, 9]
+    child_underweight:
+        category_thresholds: [7, 8, 9]
+
     metrics:
         disability:
             by_age: False
