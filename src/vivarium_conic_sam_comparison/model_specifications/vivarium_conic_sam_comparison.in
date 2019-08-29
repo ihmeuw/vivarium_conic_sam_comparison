@@ -73,6 +73,11 @@ configuration:
     child_wasting:
         category_thresholds: [7, 8, 9]
 
+    protein_energy_malnutrition:
+        threshold : ['cat1', 'cat2']
+        mortality : True
+        recoverable : True
+
     metrics:
         disability:
             by_age: False
