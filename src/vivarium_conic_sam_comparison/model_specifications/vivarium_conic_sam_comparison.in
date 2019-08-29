@@ -80,6 +80,17 @@ configuration:
     child_underweight:
         category_thresholds: [7, 8, 9]
 
+    bep_intervention:
+        proportion: 0.8
+        birth_weight_shift:
+            population:
+                mean: 100
+                sd: 30
+            individual:
+                sd: 30
+        stunting_shift: 0.0
+        wasting_shift: 0.3
+
     metrics:
         disability:
             by_age: False
