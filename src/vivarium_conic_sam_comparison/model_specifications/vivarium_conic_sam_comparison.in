@@ -17,8 +17,6 @@ components:
             - NeonatalSWC_without_incidence('neonatal_sepsis_and_other_neonatal_infections')
             - NeonatalSWC_without_incidence('neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma')
             - NeonatalSWC_without_incidence('hemolytic_disease_and_other_neonatal_jaundice')
-        disease.special_disease:
-             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
         risks:
             - Risk('alternative_risk_factor.child_wasting')
             - RiskEffect('risk_factor.child_wasting', 'cause.diarrheal_diseases.incidence_rate')
@@ -29,11 +27,8 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.diarrheal_diseases.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
-
-            - Risk('alternative_risk_factor.child_underweight')
-            - RiskEffect('risk_factor.child_underweight', 'cause.diarrheal_diseases.incidence_rate')
-            - RiskEffect('risk_factor.child_underweight', 'cause.lower_respiratory_infections.incidence_rate')
-            - RiskEffect('risk_factor.child_underweight', 'cause.measles.incidence_rate')
+        disease.special_disease:
+             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
 
     vivarium_conic_sam_comparison.components:
             - IronDeficiencyAnemia()
@@ -76,8 +71,6 @@ configuration:
     child_stunting:
         category_thresholds: [7, 8, 9]
     child_wasting:
-        category_thresholds: [7, 8, 9]
-    child_underweight:
         category_thresholds: [7, 8, 9]
 
     metrics:
