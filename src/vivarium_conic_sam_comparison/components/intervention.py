@@ -1,72 +1,143 @@
+from vivarium.framework.event import Event
+
 import pandas as pd
 
 
-class SAMIntervention:
+class MaternalIntervention:
 
     configuration_defaults = {
-        'sam_intervention': {
-            'proportion': 1.0,
-            'birth_weight_shift': 0,  # grams
-            'gestation_time_shift': 0,  # weeks
-            'stunting_shift': 0,  # z-score
-            'wasting_shift': 0,  # z-score
-            'underweight_shift': 0,  # z-score
+        'maternal_intervention': {
+            'proportion': 0.8,
+            'start_date': {
+                'year': 2020,
+                'month': 1,
+                'day': 1
+            }
         }
     }
 
-    def __init__(self):
-        self.name = 'sam_intervention'
+    def __init__(self, intervention_name: str):
+        self.intervention_name = intervention_name
+        self.configuration_defaults = {self.intervention_name:
+                                           MaternalIntervention.configuration_defaults['maternal_intervention']}
+
+    @property
+    def name(self):
+        return f'{self.intervention_name}_maternal_intervention'
 
     def setup(self, builder):
-        self.start_time = pd.Timestamp(**builder.configuration.time.start.to_dict())
-        self.config = builder.configuration['sam_intervention']
-        validate_configuration(self.config.to_dict())
-        self.randomness = builder.randomness.get_stream('sam_intervention_enrollment')
-        columns_created = ['sam_treatment_status']
+        config = builder.configuration[self.intervention_name]
+        self.start_date = pd.Timestamp(**config['start_date'].to_dict())
+        self.proportion = config.proportion
+
+        self.enrollment_randomness = builder.randomness.get_stream(f'{self.intervention_name}_enrollment')
+        self.effect_randomness = builder.randomness.get_stream('effect_draw')
+
+        columns_created = [f'{self.intervention_name}_treatment_status']
         self.population_view = builder.population.get_view(columns_created)
+
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  creates_columns=columns_created)
-        builder.value.register_value_modifier('low_birth_weight_and_short_gestation.raw_exposure',
-                                              self.adjust_lbwsg)
-        builder.value.register_value_modifier('child_stunting.exposure',
-                                              self.adjust_stunting)
-        builder.value.register_value_modifier('child_wasting.exposure',
-                                              self.adjust_wasting)
-        builder.value.register_value_modifier('child_underweight.exposure',
-                                              self.adjust_underweight)
 
     def on_initialize_simulants(self, pop_data):
-        pop = pd.DataFrame({'sam_treatment_status': 'not_treated'}, index=pop_data.index)
-        if pop_data.creation_time > self.start_time:
-            treatment_probability = self.config.proportion
-            treated = self.randomness.filter_for_probability(pop.index, treatment_probability)
-            pop.loc[treated, 'sam_treatment_status'] = 'treated'
+        pop = pd.DataFrame({f'{self.intervention_name}_treatment_status': 'not_treated'}, index=pop_data.index)
+        if pop_data.creation_time >= self.start_date:
+            treatment_probability = self.proportion
+            treated = self.enrollment_randomness.filter_for_probability(pop.index, treatment_probability)
+            pop.loc[treated, f'{self.intervention_name}_treatment_status'] = 'treated'
 
         self.population_view.update(pop)
 
-    def adjust_lbwsg(self, index, exposure):
-        pop = self.population_view.get(index)
-        exposure['birth_weight'] += self.config.birth_weight_shift * (pop.sam_treatment_status == 'treated')
-        exposure['gestation_time'] += self.config.gestation_time_shift * (pop.sam_treatment_status == 'treated')
-        return exposure
 
-    def adjust_stunting(self, index, exposure):
-        pop = self.population_view.get(index)
-        return exposure + self.config.stunting_shift * (pop.sam_treatment_status == 'treated')
+class NeonatalIntervention:
 
-    def adjust_wasting(self, index, exposure):
-        pop = self.population_view.get(index)
-        return exposure + self.config.wasting_shift * (pop.sam_treatment_status == 'treated')
+    configuration_defaults = {
+        "neonatal_intervention": {
+            "whz_target": "all",  # float or 'all'. sims at or below eligible
+            "proportion": 0.8,
+            "start_date": {
+                "year": 2020,
+                "month": 1,
+                "day": 1
+            },
+            "treatment_age": {
+                "start": 0.5,
+                "end": 1.0
+            },
+            "effect_duration": 365.25,  # days
+        }
+    }
 
-    def adjust_underweight(self, index, exposure):
-        pop = self.population_view.get(index)
-        return exposure + self.config.underweight_shift * (pop.sam_treatment_status == 'treated')
+    def __init__(self, intervention_name: str):
+        self.intervention_name = intervention_name
+        self.configuration_defaults = {self.intervention_name:
+                                       NeonatalIntervention.configuration_defaults['neonatal_intervention']}
 
+    @property
+    def name(self):
+        return f"{self.intervention_name}_treatment_algorithm"
 
-def validate_configuration(config):
-    if not (0 <= config['proportion'] <= 1):
-        raise ValueError(f'The proportion for SAM intervention must be between 0 and 1.'
-                         f'You specified {config.proportion}.')
-    for key in config:
-        if 'shift' in key and config[key] < 0:
-            raise ValueError(f'Additive shift for {key} must be positive.')
+    def setup(self, builder):
+        config = builder.configuration[self.intervention_name]
+        self.whz_target = config.whz_target
+        self.start_date = pd.Timestamp(**config['start_date'].to_dict())
+        self.duration = pd.Timedelta(days=config['effect_duration'])
+        self.treatment_age = config['treatment_age']
+        self.coverage = config['proportion']
+
+        self.clock = builder.time.clock()
+
+        self.rand = builder.randomness.get_stream(f"{self.intervention_name}_enrollment")
+
+        created_columns = [f'{self.intervention_name}_treatment_start', f'{self.intervention_name}_treatment_end']
+        required_columns = ['age']
+
+        self.wasting_exposure = builder.value.get_value(f'child_wasting.exposure')
+
+        self.pop_view = builder.population.get_view(created_columns + required_columns)
+        builder.population.initializes_simulants(self.on_initialize_simulants,
+                                                 creates_columns=created_columns,
+                                                 requires_columns=required_columns)
+
+        builder.event.register_listener('time_step', self.on_time_step)
+
+    def on_initialize_simulants(self, pop_data):
+        # Check that start date isn't set before sim start
+        if pop_data.user_data['sim_state'] == 'setup' and pop_data.creation_time >= self.start_date:
+            raise NotImplementedError("SQ-LNS intervention must begin strictly after the intervention start date.")
+
+        pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT,
+                            f'{self.intervention_name}_treatment_end': pd.NaT},
+                           index=pop_data.index)
+        self.pop_view.update(pop)
+
+    def on_time_step(self, event):
+        pop = self.pop_view.get(event.index, query="alive == 'alive'")
+        treated_idx = self.get_treated_idx(pop, event)
+
+        pop.loc[treated_idx, f'{self.intervention_name}_treatment_start'] = event.time
+        pop.loc[treated_idx, f'{self.intervention_name}_treatment_end'] = event.time + self.duration
+        self.pop_view.update(pop)
+
+    def get_treated_idx(self, pop: pd.DataFrame, event: Event):
+        # Eligible by age
+        pop_age_at_event = pop.age + (event.step_size / pd.Timedelta(days=365.25))
+        if self.clock() < self.start_date <= event.time:
+            # mass treatment when intervention starts
+            eligible_idx = pop.loc[(self.treatment_age['start'] <= pop['age']) &
+                                   (pop['age'] <= self.treatment_age['end'])].index
+            treated_idx = self.rand.filter_for_probability(eligible_idx, self.coverage)
+        elif self.start_date <= self.clock():
+            # continuous enrollment thos crossing the boundary
+            eligible_pop = pop.loc[(pop.age < self.treatment_age['start']) &
+                                   (self.treatment_age['start'] <= pop_age_at_event)]
+            treated_idx = self.rand.filter_for_probability(eligible_pop.index, self.coverage)
+        else:
+            # Intervention hasn't started.
+            treated_idx = pd.Index([])
+
+        # Eligible by target
+        if self.whz_target == 'all':
+            return treated_idx
+        else:
+            return treated_idx & (self.wasting_exposure(pop.index) <= self.whz_target)
