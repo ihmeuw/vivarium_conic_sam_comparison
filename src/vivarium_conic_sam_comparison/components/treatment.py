@@ -12,7 +12,8 @@ class MaternalTreatmentAlgorithm:
                 "year": 2020,
                 "month": 1,
                 "day": 1
-            }
+            },
+            "effect_duration": 365.25
         }
     }
 
@@ -27,25 +28,29 @@ class MaternalTreatmentAlgorithm:
 
     def setup(self, builder):
         config = builder.configuration[self.intervention_name]
+        self.clock = builder.time.clock()
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
+        self.duration = pd.Timedelta(days=config['effect_duration'])
         self.proportion = config.proportion
 
         self.enrollment_randomness = builder.randomness.get_stream(f'{self.intervention_name}_enrollment')
         self.effect_randomness = builder.randomness.get_stream('effect_draw')
 
-        columns_created = [f'{self.intervention_name}_treatment_status']
+        columns_created = [f'{self.intervention_name}_treatment_start',
+                           f'{self.intervention_name}_effect_end']
         self.population_view = builder.population.get_view(columns_created)
 
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  creates_columns=columns_created)
 
     def on_initialize_simulants(self, pop_data):
-        pop = pd.DataFrame({f'{self.intervention_name}_treatment_status': 'not_treated'}, index=pop_data.index)
+        pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT,
+                            f'{self.intervention_name}_effect_end': pd.NaT}, index=pop_data.index)
         if pop_data.creation_time >= self.start_date:
             treatment_probability = self.proportion
             treated = self.enrollment_randomness.filter_for_probability(pop.index, treatment_probability)
-            pop.loc[treated, f'{self.intervention_name}_treatment_status'] = 'treated'
-
+            pop.loc[treated, f'{self.intervention_name}_treatment_status'] = pop_data.creation_time
+            pop.loc[treated, f'{self.intervention_name}_effect_end'] = pop_data.creation_time + self.duration
         self.population_view.update(pop)
 
 
@@ -89,7 +94,7 @@ class NeonatalTreatmentAlgorithm:
 
         self.rand = builder.randomness.get_stream(f"{self.intervention_name}_enrollment")
 
-        created_columns = [f'{self.intervention_name}_treatment_start', f'{self.intervention_name}_treatment_end']
+        created_columns = [f'{self.intervention_name}_treatment_start', f'{self.intervention_name}_effect_end']
         required_columns = ['age']
 
         self.wasting_exposure = builder.value.get_value(f'child_wasting.exposure')
@@ -107,7 +112,7 @@ class NeonatalTreatmentAlgorithm:
             raise NotImplementedError("SQ-LNS intervention must begin strictly after the intervention start date.")
 
         pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT,
-                            f'{self.intervention_name}_treatment_end': pd.NaT},
+                            f'{self.intervention_name}_effect_end': pd.NaT},
                            index=pop_data.index)
         self.pop_view.update(pop)
 
@@ -116,7 +121,7 @@ class NeonatalTreatmentAlgorithm:
         treated_idx = self.get_treated_idx(pop, event)
 
         pop.loc[treated_idx, f'{self.intervention_name}_treatment_start'] = event.time
-        pop.loc[treated_idx, f'{self.intervention_name}_treatment_end'] = event.time + self.duration
+        pop.loc[treated_idx, f'{self.intervention_name}_effect_end'] = event.time + self.duration
         self.pop_view.update(pop)
 
     def get_treated_idx(self, pop: pd.DataFrame, event: Event):
@@ -140,4 +145,4 @@ class NeonatalTreatmentAlgorithm:
         if self.whz_target == 'all':
             return treated_idx
         else:
-            return treated_idx & (self.wasting_exposure(pop.index) <= self.whz_target)
+            return treated_idx & (self.wasting_exposure(pop.index) <= self.whz_target + 10)
