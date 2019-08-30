@@ -16,9 +16,9 @@ class InterventionEffect:
                 "individual": {
                     "sd": 0.0
                 },
-                "ramp_up_duration": 0,  # Length of logistic ramp up/down in days.
-                "ramp_down_duration": 0,
-                "permanent": False  # will override ramp down and post effect
+                "ramp_up_duration": 0,  # Length of logistic ramp up in days.
+                "ramp_down_duration": 0,  # """
+                "permanent": False  # Overrides ramp down and post-effect groups to be full effect
             }
         }
     }
@@ -89,6 +89,9 @@ class InterventionEffect:
             effect_size.loc[ramp_down] = self.ramp_efficacy(ramp_down, invert=True)
             effect_size.loc[post_effect] = 0
 
+        # FIXME: Hack for lbwsg weirdness for now
+        if self.target.name == 'low_birth_weight_and_short_gestation':
+            return exposure['birth_weight'] + effect_size
         return exposure + effect_size
 
     def get_treatment_groups(self, index):
@@ -145,13 +148,14 @@ class InterventionEffect:
         # 1/p is the proportion of the maximum effect.
         # Size of the discontinuity between constant and logistic functions.
         p = 10_000
-        growth_rate = 2 / ramp_duration * np.log(p)
 
         if invert:
-            ramp_days = pd.Timedelta(days=self.ramp_down_duration)
+            ramp_days = pd.Timedelta(days=self.config.ramp_down_duration)
+            growth_rate = 2 / self.config.ramp_down_duration * np.log(p)
             ramp_position = ((pop[f'{self.intervention_name}_effect_end'] + ramp_days / 2) - self.clock()) / pd.Timedelta(days=1)
         else:
-            ramp_days = pd.Timedelta(days=self.ramp_up_duration)
+            ramp_days = pd.Timedelta(days=self.config.ramp_up_duration)
+            growth_rate = 2 / self.config.ramp_up_duration * np.log(p)
             ramp_position = (self.clock() - (pop[f'{self.intervention_name}_treatment_start'] + ramp_days / 2)) / pd.Timedelta(days=1)
 
         scale = 1 / (1 + np.exp(-growth_rate * ramp_position))
