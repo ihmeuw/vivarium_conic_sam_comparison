@@ -3,15 +3,15 @@ from vivarium.framework.event import Event
 import pandas as pd
 
 
-class MaternalIntervention:
+class MaternalTreatmentAlgorithm:
 
     configuration_defaults = {
-        'maternal_intervention': {
-            'proportion': 0.8,
-            'start_date': {
-                'year': 2020,
-                'month': 1,
-                'day': 1
+        "maternal_intervention": {
+            "proportion": 0.8,
+            "start_date": {
+                "year": 2020,
+                "month": 1,
+                "day": 1
             }
         }
     }
@@ -19,7 +19,7 @@ class MaternalIntervention:
     def __init__(self, intervention_name: str):
         self.intervention_name = intervention_name
         self.configuration_defaults = {self.intervention_name:
-                                           MaternalIntervention.configuration_defaults['maternal_intervention']}
+                                       MaternalTreatmentAlgorithm.configuration_defaults['maternal_intervention']}
 
     @property
     def name(self):
@@ -49,7 +49,7 @@ class MaternalIntervention:
         self.population_view.update(pop)
 
 
-class NeonatalIntervention:
+class NeonatalTreatmentAlgorithm:
 
     configuration_defaults = {
         "neonatal_intervention": {
@@ -71,7 +71,7 @@ class NeonatalIntervention:
     def __init__(self, intervention_name: str):
         self.intervention_name = intervention_name
         self.configuration_defaults = {self.intervention_name:
-                                       NeonatalIntervention.configuration_defaults['neonatal_intervention']}
+                                       NeonatalTreatmentAlgorithm.configuration_defaults['neonatal_intervention']}
 
     @property
     def name(self):
