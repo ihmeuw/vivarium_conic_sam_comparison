@@ -13,7 +13,7 @@ class MaternalTreatmentAlgorithm:
                 "month": 1,
                 "day": 1
             },
-            "effect_duration": 365.25
+            "effect_duration": 365.25  # Days. Should include ramp up and down.
         }
     }
 
@@ -49,7 +49,7 @@ class MaternalTreatmentAlgorithm:
         if pop_data.creation_time >= self.start_date:
             treatment_probability = self.proportion
             treated = self.enrollment_randomness.filter_for_probability(pop.index, treatment_probability)
-            pop.loc[treated, f'{self.intervention_name}_treatment_status'] = pop_data.creation_time
+            pop.loc[treated, f'{self.intervention_name}_treatment_start'] = pop_data.creation_time
             pop.loc[treated, f'{self.intervention_name}_effect_end'] = pop_data.creation_time + self.duration
         self.population_view.update(pop)
 
@@ -133,7 +133,7 @@ class NeonatalTreatmentAlgorithm:
                                    (pop['age'] <= self.treatment_age['end'])].index
             treated_idx = self.rand.filter_for_probability(eligible_idx, self.coverage)
         elif self.start_date <= self.clock():
-            # continuous enrollment thos crossing the boundary
+            # continuous enrollment of those crossing the boundary
             eligible_pop = pop.loc[(pop.age < self.treatment_age['start']) &
                                    (self.treatment_age['start'] <= pop_age_at_event)]
             treated_idx = self.rand.filter_for_probability(eligible_pop.index, self.coverage)
@@ -142,7 +142,10 @@ class NeonatalTreatmentAlgorithm:
             treated_idx = pd.Index([])
 
         # Eligible by target
-        if self.whz_target == 'all':
-            return treated_idx
-        else:
-            return treated_idx & (self.wasting_exposure(pop.index) <= self.whz_target + 10)
+        if self.whz_target != 'all':
+            treated_idx &= (self.wasting_exposure(pop.index) <= self.whz_target + 10)
+
+        # Filter already treated
+        treated_idx &= (pd.isnull(pop[f'{self.intervention_name}_treatment_start']))
+
+        return treated_idx
