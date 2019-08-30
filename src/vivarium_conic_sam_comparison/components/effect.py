@@ -7,7 +7,7 @@ from vivarium_public_health.utilities import TargetString
 
 class InterventionEffect:
     configuration_defaults = {
-        "neonatal_intervention": {
+        "intervention": {
             "effect": {
                 "population": {
                     "mean": 0.0,
@@ -28,7 +28,7 @@ class InterventionEffect:
         self.target = TargetString(target)
         self.configuration_defaults = {self.intervention_name:
                                        {f'effect_on_{self.target.name}':
-                                        InterventionEffect.configuration_defaults['neonatal_intervention']['effect']}}
+                                        InterventionEffect.configuration_defaults['intervention']['effect']}}
 
     @property
     def name(self):
