@@ -27,13 +27,10 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.diarrheal_diseases.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
-        disease.special_disease:
-             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
 
     vivarium_conic_sam_comparison.components:
             - IronDeficiencyAnemia()
             - LBWSGRisk()
-            - NeonatalPreterm()
             - LBWSGRiskEffect('cause.neonatal_sepsis_and_other_neonatal_infections.excess_mortality')
             - LBWSGRiskEffect('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.excess_mortality')
             - LBWSGRiskEffect('cause.hemolytic_disease_and_other_neonatal_jaundice.excess_mortality')
@@ -50,6 +47,12 @@ components:
             - NeonatalTreatmentAlgorithm("TF_SAM")
             - InterventionEffect("TF_SAM", 'risk_factor.child_wasting.exposure')
             - InterventionEffect("TF_SAM", 'risk_factor.child_stunting.exposure')
+            - NeonatalPreterm()
+
+    vivarium_public_health.disease:
+        special_disease:
+             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
+
 
 {% set location = location.replace(" ", "_").replace("'", "").lower() %}
 configuration:
@@ -59,7 +62,7 @@ configuration:
         artifact_path: /share/costeffectiveness/artifacts/vivarium_conic_sam_comparison/vivarium_conic_sam_comparison_{{ location[0]|upper}}{{location[1:] }}.hdf
     interpolation:
         order: 0
-        extrapolate: False
+        extrapolate: True
     randomness:
         map_size: 1_000_000
         key_columns: ['entrance_time']
@@ -132,10 +135,10 @@ configuration:
             year: 2020
             month: 1
             day: 15
-         treatment_age:
-            start: 0.5
-            end: 1.0
-         effect_duration: 425.25 # days: one year and two months
+        treatment_age:
+           start: 0.5
+           end: 1.0
+        effect_duration: 425.25 # days: one year and two months
 
         effect_on_child_wasting:
             population:
@@ -172,10 +175,10 @@ configuration:
             year: 2020
             month: 1
             day: 15
-         treatment_age:
-            start: 0.5
-            end: 5.0
-         effect_duration: 104 # days: 3 months and two weeks
+        treatment_age:
+           start: 0.5
+           end: 5.0
+        effect_duration: 104 # days: 3 months and two weeks
 
         effect_on_child_wasting:
             population:
