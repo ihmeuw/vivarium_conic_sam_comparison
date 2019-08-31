@@ -91,8 +91,10 @@ class InterventionEffect:
 
         # FIXME: Hack for lbwsg weirdness for now
         if self.target.name == 'low_birth_weight_and_short_gestation':
-            return exposure['birth_weight'] + effect_size
-        return exposure + effect_size
+            exposure['birth_weight'] += effect_size
+        else:
+            exposure += effect_size
+        return exposure
 
     def get_treatment_groups(self, index):
         ramp_up_duration = pd.Timedelta(days=self.config.ramp_up_duration)
