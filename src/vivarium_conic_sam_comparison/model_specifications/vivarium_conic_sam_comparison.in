@@ -27,44 +27,58 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.diarrheal_diseases.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
-        disease.special_disease:
-             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
 
     vivarium_conic_sam_comparison.components:
             - IronDeficiencyAnemia()
             - LBWSGRisk()
-            - NeonatalPreterm()
             - LBWSGRiskEffect('cause.neonatal_sepsis_and_other_neonatal_infections.excess_mortality')
             - LBWSGRiskEffect('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.excess_mortality')
             - LBWSGRiskEffect('cause.hemolytic_disease_and_other_neonatal_jaundice.excess_mortality')
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality')
             - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality')
+            - MaternalTreatmentAlgorithm('BEP')
+            - InterventionEffect('BEP', 'risk_factor.low_birth_weight_and_short_gestation.raw_exposure')
+            - InterventionEffect('BEP', 'risk_factor.child_wasting.exposure')
+            - InterventionEffect('BEP', 'risk_factor.child_stunting.exposure')
+            - NeonatalTreatmentAlgorithm('SQ_LNS')
+            - InterventionEffect('SQ_LNS', 'risk_factor.child_wasting.exposure')
+            - InterventionEffect('SQ_LNS', 'risk_factor.child_stunting.exposure')
+            - InterventionEffect('SQ_LNS', 'risk_factor.iron_deficiency.exposure')
+            - NeonatalTreatmentAlgorithm("TF_SAM")
+            - InterventionEffect("TF_SAM", 'risk_factor.child_wasting.exposure')
+            - InterventionEffect("TF_SAM", 'risk_factor.child_stunting.exposure')
+            - NeonatalPreterm()
+
+    vivarium_public_health.disease:
+        special_disease:
+             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
+
 
 {% set location = location.replace(" ", "_").replace("'", "").lower() %}
 configuration:
     input_data:
         location:  {{ location[0]|upper}}{{location[1:] }}
         input_draw_number: 0
-        artifact_path: /share/costeffectiveness/artifacts/vivarium_conic_sam_comparison/vivarium_conic_sam_comparison_{{ location }}.hdf
+        artifact_path: /share/costeffectiveness/artifacts/vivarium_conic_sam_comparison/vivarium_conic_sam_comparison_{{ location[0]|upper}}{{location[1:] }}.hdf
     interpolation:
         order: 0
-        extrapolate: False
+        extrapolate: True
     randomness:
         map_size: 1_000_000
         key_columns: ['entrance_time']
         random_seed: 0
     time:
         start:
-            year: 2005
-            month: 7
-            day: 2
+            year: 2020
+            month: 1
+            day: 1
         end:
-            year: 2010
-            month: 7
-            day: 2
+            year: 2025
+            month: 12
+            day: 31
         step_size: 1 # Days
     population:
-        population_size: 100
+        population_size: 1_000
         age_start: 0
         age_end: 100
 
@@ -77,6 +91,113 @@ configuration:
         threshold : ['cat1', 'cat2']
         mortality : True
         recoverable : True
+
+    BEP_intervention:
+        proportion: 0.8
+        start_date:
+            year: 2020
+            month: 1
+            day: 15
+        effect_duration: 365.25  # days, overwritten by permanent setting
+
+        effect_on_low_birth_weight_and_short_gestation:
+            population:
+                mean: 100.0
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 0
+            ramp_down_duration: 0
+            permanent: True
+        effect_on_child_wasting:
+            population:
+                mean: 0.3
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 0
+            ramp_down_duration: 0
+            permanent: True
+        effect_on_child_stunting:
+            population:
+                mean: 0.0
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 0
+            ramp_down_duration: 0
+            permanent: True
+
+    SQ_LNS_intervention:
+        whz_target: all
+        proportion: 0.8
+        start_date:
+            year: 2020
+            month: 1
+            day: 15
+        treatment_age:
+           start: 0.5
+           end: 1.0
+        effect_duration: 425.25 # days: one year and two months
+
+        effect_on_child_wasting:
+            population:
+                mean:
+                sd:
+            individual:
+                sd:
+            ramp_up_duration:
+            ramp_down_duration:
+            permanent:
+        effect_on_child_stunting:
+            population:
+                mean:
+                sd:
+            individual:
+                sd:
+            ramp_up_duration:
+            ramp_down_duration:
+            permanent:
+        effect_on_iron_deficiency:
+            population:
+                mean:
+                sd:
+            individual:
+                sd:
+            ramp_up_duration:
+            ramp_down_duration:
+            permanent:
+
+    TF_SAM_intervention:
+        whz_target: -3.0
+        proportion: 0.8
+        start_date:
+            year: 2020
+            month: 1
+            day: 15
+        treatment_age:
+           start: 0.5
+           end: 5.0
+        effect_duration: 104 # days: 3 months and two weeks
+
+        effect_on_child_wasting:
+            population:
+                mean: 0.4
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration:
+            ramp_down_duration:
+            permanent:
+        effect_on_child_stunting:
+            population:
+                mean: 0.0
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 7  # days: 1 week
+            ramp_down_duration: 14  # days: 2 weeks
+            permanent:  False
 
     metrics:
         disability:
