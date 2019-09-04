@@ -167,7 +167,7 @@ class InterventionEffect:
         if invert:
             ramp_days = pd.Timedelta(days=self.config.ramp_down_duration)
             growth_rate = 2 / self.config.ramp_down_duration * np.log(p)
-            ramp_position = ((pop[f'{self.intervention_name}_effect_end'] + ramp_days / 2) - self.clock()) / pd.Timedelta(days=1)
+            ramp_position = ((pop[f'{self.intervention_name}_{self.target.name}_effect_end'] + ramp_days / 2) - self.clock()) / pd.Timedelta(days=1)
         else:
             ramp_days = pd.Timedelta(days=self.config.ramp_up_duration)
             growth_rate = 2 / self.config.ramp_up_duration * np.log(p)
