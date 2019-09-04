@@ -9,6 +9,8 @@ class InterventionEffect:
     configuration_defaults = {
         "intervention": {
             "effect": {
+                "duration": 365.25,  # Float days or 'permanent'.  Inclusive of ramp up/down.
+                                     # Permanent overrides ramp down.
                 "population": {
                     "mean": 0.0,
                     "sd": 0.0
@@ -18,7 +20,6 @@ class InterventionEffect:
                 },
                 "ramp_up_duration": 0,  # Length of logistic ramp up in days.
                 "ramp_down_duration": 0,  # """
-                "permanent": False  # Overrides ramp down and post-effect groups to be full effect
             }
         }
     }
@@ -36,6 +37,7 @@ class InterventionEffect:
 
     def setup(self, builder):
         self.config = builder.configuration[self.intervention_name][f'effect_on_{self.target.name}']
+        self.duration = pd.Timedelta(days=self.config['duration']) if isinstance(self.config['duration'], float) else self.config['duration']
         self.clock = builder.time.clock()
 
         self._effect_size = pd.Series()
@@ -44,9 +46,12 @@ class InterventionEffect:
 
         builder.value.register_value_modifier(f'{self.target.name}.{self.target.measure}', self.adjust_exposure)
 
-        builder.population.initializes_simulants(self.on_initialize_simulants)
-        self.pop_view = builder.population.get_view([f'{self.intervention_name}_treatment_start',
-                                                     f'{self.intervention_name}_effect_end'])
+        created_columns = [f'{self.intervention_name}_effect_end']
+        required_columns = [f'{self.intervention_name}_treatment_start']
+        builder.population.initializes_simulants(self.on_initialize_simulants,
+                                                 creates_columns=created_columns,
+                                                 requires_columns=required_columns)
+        self.pop_view = builder.population.get_view(created_columns + required_columns)
 
         self.population_effect = self.get_population_effect_size(self.config.population.mean,
                                                                  self.config.population.sd,
@@ -57,6 +62,14 @@ class InterventionEffect:
                                                             self.config.individual.sd,
                                                             'individual_effect')
         self._effect_size = self._effect_size.append(individual_effect)
+
+        if self.duration == 'permanent':
+            pop = pd.DataFrame({f'{self.intervention_name}_effect_end': pd.NaT})
+        else:
+            pop = self.pop_view.get(pop_data.index)
+            pop[f'{self.intervention_name}_effect_end'] = (pop[f'{self.intervention_name}_treatment_start'] +
+                                                           self.duration)
+        self.pop_view.update(pop)
 
     def get_population_effect_size(self, mean, sd, key):
         if sd == 0:
@@ -82,7 +95,7 @@ class InterventionEffect:
         effect_size.loc[untreated] = 0
         effect_size.loc[ramp_up] = self.ramp_efficacy(ramp_up)
         effect_size.loc[full_effect] = self._effect_size.loc[full_effect]
-        if self.config.permanent:
+        if self.duration == 'permanent':
             effect_size.loc[ramp_down] = self._effect_size[ramp_down]
             effect_size.loc[post_effect] = self._effect_size[post_effect]
         else:
