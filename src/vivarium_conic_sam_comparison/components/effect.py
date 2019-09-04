@@ -46,7 +46,7 @@ class InterventionEffect:
 
         builder.value.register_value_modifier(f'{self.target.name}.{self.target.measure}', self.adjust_exposure)
 
-        created_columns = [f'{self.intervention_name}_effect_end']
+        created_columns = [f'{self.intervention_name}_{self.target.name}_effect_end']
         required_columns = [f'{self.intervention_name}_treatment_start']
         builder.population.initializes_simulants(self.on_initialize_simulants,
                                                  creates_columns=created_columns,
@@ -64,11 +64,11 @@ class InterventionEffect:
         self._effect_size = self._effect_size.append(individual_effect)
 
         if self.duration == 'permanent':
-            pop = pd.DataFrame({f'{self.intervention_name}_effect_end': pd.NaT})
+            pop = pd.DataFrame({f'{self.intervention_name}_{self.target.name}_effect_end': pd.NaT})
         else:
             pop = self.pop_view.get(pop_data.index)
-            pop[f'{self.intervention_name}_effect_end'] = (pop[f'{self.intervention_name}_treatment_start'] +
-                                                           self.duration)
+            pop[f'{self.intervention_name}_{self.target.name}_effect_end'] = (pop[f'{self.intervention_name}_treatment_start'] +
+                                                                              self.duration)
         self.pop_view.update(pop)
 
     def get_population_effect_size(self, mean, sd, key):
@@ -121,12 +121,12 @@ class InterventionEffect:
                           & (self.clock() < pop[f'{self.intervention_name}_treatment_start'] + ramp_up_duration)].index
 
         full_effect = pop.loc[(pop[f'{self.intervention_name}_treatment_start'] + ramp_up_duration <= self.clock())
-                              & (self.clock() <= pop[f'{self.intervention_name}_effect_end'] - ramp_down_duration)].index
+                              & (self.clock() <= pop[f'{self.intervention_name}_{self.target.name}_effect_end'] - ramp_down_duration)].index
 
-        ramp_down = pop.loc[(pop[f'{self.intervention_name}_effect_end'] - ramp_down_duration < self.clock())
-                            & (self.clock() < pop[f'{self.intervention_name}_effect_end'])].index
+        ramp_down = pop.loc[(pop[f'{self.intervention_name}_{self.target.name}_effect_end'] - ramp_down_duration < self.clock())
+                            & (self.clock() < pop[f'{self.intervention_name}_{self.target.name}_effect_end'])].index
 
-        post_effect = pop.loc[pop[f'{self.intervention_name}_effect_end'] <= self.clock()].index
+        post_effect = pop.loc[pop[f'{self.intervention_name}_{self.target.name}_effect_end'] <= self.clock()].index
 
         return untreated, ramp_up, full_effect, ramp_down, post_effect
 
