@@ -64,7 +64,7 @@ class InterventionEffect:
         self._effect_size = self._effect_size.append(individual_effect)
 
         if self.duration == 'permanent':
-            pop = pd.DataFrame({f'{self.intervention_name}_{self.target.name}_effect_end': pd.NaT})
+            pop = pd.DataFrame({f'{self.intervention_name}_{self.target.name}_effect_end': pd.NaT}, index=pop_data.index)
         else:
             pop = self.pop_view.subview([f'{self.intervention_name}_treatment_start']).get(pop_data.index)
             pop[f'{self.intervention_name}_{self.target.name}_effect_end'] = (pop[f'{self.intervention_name}_treatment_start'] +
