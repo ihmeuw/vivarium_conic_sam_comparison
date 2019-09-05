@@ -18,15 +18,15 @@ class MaternalTreatmentAlgorithm:
 
     def __init__(self, intervention_name: str):
         self.intervention_name = intervention_name
-        self.configuration_defaults = {self.intervention_name:
+        self.configuration_defaults = {f"{self.intervention_name}_intervention":
                                        MaternalTreatmentAlgorithm.configuration_defaults['maternal_intervention']}
 
     @property
     def name(self):
-        return f'{self.intervention_name}_maternal_intervention'
+        return f'{self.intervention_name}_treatment_algorithm'
 
     def setup(self, builder):
-        config = builder.configuration[self.intervention_name]
+        config = builder.configuration[f"{self.intervention_name}_intervention"]
         self.clock = builder.time.clock()
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.proportion = config.proportion
@@ -70,7 +70,7 @@ class NeonatalTreatmentAlgorithm:
 
     def __init__(self, intervention_name: str):
         self.intervention_name = intervention_name
-        self.configuration_defaults = {self.intervention_name:
+        self.configuration_defaults = {f"{self.intervention_name}_intervention":
                                        NeonatalTreatmentAlgorithm.configuration_defaults['neonatal_intervention']}
 
     @property
@@ -78,7 +78,7 @@ class NeonatalTreatmentAlgorithm:
         return f"{self.intervention_name}_treatment_algorithm"
 
     def setup(self, builder):
-        config = builder.configuration[self.intervention_name]
+        config = builder.configuration[f"{self.intervention_name}_intervention"]
         self.whz_target = config.whz_target
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.treatment_age = config['treatment_age']
