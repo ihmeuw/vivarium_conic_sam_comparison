@@ -27,7 +27,7 @@ class InterventionEffect:
     def __init__(self, intervention_name: str, target: str):
         self.intervention_name = intervention_name
         self.target = TargetString(target)
-        self.configuration_defaults = {self.intervention_name:
+        self.configuration_defaults = {f"{self.intervention_name}_intervention":
                                        {f'effect_on_{self.target.name}':
                                         InterventionEffect.configuration_defaults['intervention']['effect']}}
 
@@ -36,7 +36,7 @@ class InterventionEffect:
         return f'{self.intervention_name}_effect_on_{self.target.name}'
 
     def setup(self, builder):
-        self.config = builder.configuration[self.intervention_name][f'effect_on_{self.target.name}']
+        self.config = builder.configuration[f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
         self.duration = pd.Timedelta(days=self.config['duration']) if isinstance(self.config['duration'], float) else self.config['duration']
         self.clock = builder.time.clock()
 
