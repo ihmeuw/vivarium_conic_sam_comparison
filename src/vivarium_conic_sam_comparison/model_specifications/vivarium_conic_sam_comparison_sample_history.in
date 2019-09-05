@@ -82,10 +82,6 @@ configuration:
         population_size: 10_000
         age_start: 0
         age_end: 100
-    metrics:
-        sample_history_observer:
-            sample_size: 500
-            path: /share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history_{{ location }}.hdf
 
     child_stunting:
         category_thresholds: [7, 8, 9]
@@ -210,3 +206,7 @@ configuration:
             by_age: False
             by_sex: False
             by_year: False
+        sample_history_observer:
+            sample_size: 500
+            path: /share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history_{{ location }}.hdf
+
