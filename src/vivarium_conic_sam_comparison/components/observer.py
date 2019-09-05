@@ -60,9 +60,9 @@ class SampleHistoryObserver:
                           'child_stunting_raw_exposure': lambda pop_index: builder.value.get_value('child_stunting.exposure')(pop_index, skip_post_processor=True),
                           'low_birth_weight_and_short_gestation_exposure':
                               builder.value.get_value('low_birth_weight_and_short_gestation.exposure'),
-                          'low_birth_weight_and_short_gestation_raw_bw_exposure':
+                          'low_birth_weight_and_short_gestation_raw_bw_raw_exposure':
                               lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['birth_weight'] ,
-                          'low_birth_weight_and_short_gestation_raw_gt_exposure':
+                          'low_birth_weight_and_short_gestation_raw_gt_raw_exposure':
                               lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['gestation_time'],
                           'diarrheal_diseases_incidence_rate':
                               builder.value.get_value('diarrheal_diseases.incidence_rate'),
@@ -94,6 +94,11 @@ class SampleHistoryObserver:
                 values = values.sum(axis=1)
             values = values.rename(name)
             pipeline_results.append(values)
+
+            if 'raw_exposure' in name:
+                baseline_values = pipeline.source(pop.index)
+                baseline_values = raw_values.rename(f'{name}_baseline')
+                pipeline_results.append(baseline_values)
 
         record = pd.concat(pipeline_results + [pop], axis=1)
         record['time'] = self.clock()
