@@ -120,23 +120,20 @@ class NeonatalTreatmentAlgorithm:
         pop_age_at_event = pop.age + (event.step_size / pd.Timedelta(days=365.25))
         if self.clock() < self.start_date <= event.time:
             # mass treatment when intervention starts
-            eligible_idx = pop.loc[(self.treatment_age['start'] <= pop['age']) &
-                                   (pop['age'] <= self.treatment_age['end'])].index
-            treated_idx = self.rand.filter_for_probability(eligible_idx, self.coverage)
+            eligible_mask = (self.treatment_age['start'] <= pop['age']) & (pop['age'] <= self.treatment_age['end'])
         elif self.start_date <= self.clock():
             # continuous enrollment of those crossing the boundary
-            eligible_pop = pop.loc[(pop.age < self.treatment_age['start']) &
-                                   (self.treatment_age['start'] <= pop_age_at_event)]
-            treated_idx = self.rand.filter_for_probability(eligible_pop.index, self.coverage)
+            eligible_mask = (pop.age < self.treatment_age['start']) & (self.treatment_age['start'] <= pop_age_at_event)
         else:
             # Intervention hasn't started.
-            treated_idx = pd.Index([])
+            return pd.Index([])
 
         # Eligible by target
         if self.whz_target != 'all':
-            treated_idx &= (self.wasting_exposure(pop.index) <= self.whz_target + 10)
+            eligible_mask &= self.wasting_exposure(pop.index, skip_post_processor=True) <= self.whz_target + 10
 
         # Filter already treated
-        treated_idx &= (pd.isnull(pop[f'{self.intervention_name}_treatment_start']))
+        eligible_mask &= pd.isnull(pop[f'{self.intervention_name}_treatment_start'])
 
-        return treated_idx
+        return self.rand.filter_for_probability(pop.loc[eligible_mask].index, self.coverage)
+
