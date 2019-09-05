@@ -40,6 +40,11 @@ class MaternalTreatmentAlgorithm:
                                                  creates_columns=columns_created)
 
     def on_initialize_simulants(self, pop_data):
+        # Check that start date isn't set before sim start
+        if pop_data.user_data['sim_state'] == 'setup' and pop_data.creation_time >= self.start_date:
+            raise NotImplementedError(f"{self.intervention_name} intervention must begin strictly "
+                                      f"after the intervention start date.")
+
         pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT}, index=pop_data.index)
         if pop_data.creation_time >= self.start_date:
             treatment_probability = self.proportion
@@ -102,7 +107,8 @@ class NeonatalTreatmentAlgorithm:
     def on_initialize_simulants(self, pop_data):
         # Check that start date isn't set before sim start
         if pop_data.user_data['sim_state'] == 'setup' and pop_data.creation_time >= self.start_date:
-            raise NotImplementedError("SQ-LNS intervention must begin strictly after the intervention start date.")
+            raise NotImplementedError(f"{self.intervention_name} intervention must begin strictly "
+                                      f"after the intervention start date.")
 
         pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT},
                            index=pop_data.index)
