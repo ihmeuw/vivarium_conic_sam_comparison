@@ -9,6 +9,8 @@ class InterventionEffect:
     configuration_defaults = {
         "intervention": {
             "effect": {
+                "duration": 365.25,  # Float days or 'permanent'.  Inclusive of ramp up/down.
+                                     # Permanent overrides ramp down.
                 "population": {
                     "mean": 0.0,
                     "sd": 0.0
@@ -18,7 +20,6 @@ class InterventionEffect:
                 },
                 "ramp_up_duration": 0,  # Length of logistic ramp up in days.
                 "ramp_down_duration": 0,  # """
-                "permanent": False  # Overrides ramp down and post-effect groups to be full effect
             }
         }
     }
@@ -26,7 +27,7 @@ class InterventionEffect:
     def __init__(self, intervention_name: str, target: str):
         self.intervention_name = intervention_name
         self.target = TargetString(target)
-        self.configuration_defaults = {self.intervention_name:
+        self.configuration_defaults = {f"{self.intervention_name}_intervention":
                                        {f'effect_on_{self.target.name}':
                                         InterventionEffect.configuration_defaults['intervention']['effect']}}
 
@@ -35,7 +36,8 @@ class InterventionEffect:
         return f'{self.intervention_name}_effect_on_{self.target.name}'
 
     def setup(self, builder):
-        self.config = builder.configuration[self.intervention_name][f'effect_on_{self.target.name}']
+        self.config = builder.configuration[f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
+        self.duration = pd.Timedelta(days=self.config['duration']) if isinstance(self.config['duration'], float) else self.config['duration']
         self.clock = builder.time.clock()
 
         self._effect_size = pd.Series()
@@ -44,9 +46,12 @@ class InterventionEffect:
 
         builder.value.register_value_modifier(f'{self.target.name}.{self.target.measure}', self.adjust_exposure)
 
-        builder.population.initializes_simulants(self.on_initialize_simulants)
-        self.pop_view = builder.population.get_view([f'{self.intervention_name}_treatment_start',
-                                                     f'{self.intervention_name}_effect_end'])
+        created_columns = [f'{self.intervention_name}_{self.target.name}_effect_end']
+        required_columns = [f'{self.intervention_name}_treatment_start']
+        builder.population.initializes_simulants(self.on_initialize_simulants,
+                                                 creates_columns=created_columns,
+                                                 requires_columns=required_columns)
+        self.pop_view = builder.population.get_view(created_columns + required_columns)
 
         self.population_effect = self.get_population_effect_size(self.config.population.mean,
                                                                  self.config.population.sd,
@@ -57,6 +62,14 @@ class InterventionEffect:
                                                             self.config.individual.sd,
                                                             'individual_effect')
         self._effect_size = self._effect_size.append(individual_effect)
+
+        if self.duration == 'permanent':
+            pop = pd.DataFrame({f'{self.intervention_name}_{self.target.name}_effect_end': pd.NaT}, index=pop_data.index)
+        else:
+            pop = self.pop_view.subview([f'{self.intervention_name}_treatment_start']).get(pop_data.index)
+            pop[f'{self.intervention_name}_{self.target.name}_effect_end'] = (pop[f'{self.intervention_name}_treatment_start'] +
+                                                                              self.duration)
+        self.pop_view.update(pop)
 
     def get_population_effect_size(self, mean, sd, key):
         if sd == 0:
@@ -82,7 +95,7 @@ class InterventionEffect:
         effect_size.loc[untreated] = 0
         effect_size.loc[ramp_up] = self.ramp_efficacy(ramp_up)
         effect_size.loc[full_effect] = self._effect_size.loc[full_effect]
-        if self.config.permanent:
+        if self.duration == 'permanent':
             effect_size.loc[ramp_down] = self._effect_size[ramp_down]
             effect_size.loc[post_effect] = self._effect_size[post_effect]
         else:
@@ -108,12 +121,12 @@ class InterventionEffect:
                           & (self.clock() < pop[f'{self.intervention_name}_treatment_start'] + ramp_up_duration)].index
 
         full_effect = pop.loc[(pop[f'{self.intervention_name}_treatment_start'] + ramp_up_duration <= self.clock())
-                              & (self.clock() <= pop[f'{self.intervention_name}_effect_end'] - ramp_down_duration)].index
+                              & (self.clock() <= pop[f'{self.intervention_name}_{self.target.name}_effect_end'] - ramp_down_duration)].index
 
-        ramp_down = pop.loc[(pop[f'{self.intervention_name}_effect_end'] - ramp_down_duration < self.clock())
-                            & (self.clock() < pop[f'{self.intervention_name}_effect_end'])].index
+        ramp_down = pop.loc[(pop[f'{self.intervention_name}_{self.target.name}_effect_end'] - ramp_down_duration < self.clock())
+                            & (self.clock() < pop[f'{self.intervention_name}_{self.target.name}_effect_end'])].index
 
-        post_effect = pop.loc[pop[f'{self.intervention_name}_effect_end'] <= self.clock()].index
+        post_effect = pop.loc[pop[f'{self.intervention_name}_{self.target.name}_effect_end'] <= self.clock()].index
 
         return untreated, ramp_up, full_effect, ramp_down, post_effect
 
@@ -154,7 +167,7 @@ class InterventionEffect:
         if invert:
             ramp_days = pd.Timedelta(days=self.config.ramp_down_duration)
             growth_rate = 2 / self.config.ramp_down_duration * np.log(p)
-            ramp_position = ((pop[f'{self.intervention_name}_effect_end'] + ramp_days / 2) - self.clock()) / pd.Timedelta(days=1)
+            ramp_position = ((pop[f'{self.intervention_name}_{self.target.name}_effect_end'] + ramp_days / 2) - self.clock()) / pd.Timedelta(days=1)
         else:
             ramp_days = pd.Timedelta(days=self.config.ramp_up_duration)
             growth_rate = 2 / self.config.ramp_up_duration * np.log(p)
