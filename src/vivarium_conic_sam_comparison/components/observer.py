@@ -32,11 +32,16 @@ class SampleHistoryObserver:
                             'cause_of_death',
                             'years_of_life_lost',
                             'BEP_treatment_start',
-                            'BEP_effect_end',
+                            'BEP_low_birth_weight_and_short_gestation_effect_end',
+                            'BEP_child_wasting_effect_end',
+                            'BEP_child_stunting_effect_end',
                             'SQ_LNS_treatment_start',
-                            'SQ_LNS_effect_end',
+                            'SQ_LNS_child_wasting_effect_end',
+                            'SQ_LNS_child_stunting_effect_end',
+                            'SQ_LNS_iron_deficiency_effect_end',
                             'TF_SAM_treatment_start',
-                            'TF_SAM_effect_end',
+                            'TF_SAM_child_wasting_effect_end',
+                            'TF_SAM_child_stunting_effect_end',
                             'neonatal_preterm_birth_event_time',
                             'diarrheal_diseases_event_time',
                             'lower_respiratory_infections_event_time',
@@ -56,9 +61,9 @@ class SampleHistoryObserver:
                           'low_birth_weight_and_short_gestation_exposure':
                               builder.value.get_value('low_birth_weight_and_short_gestation.exposure'),
                           'low_birth_weight_and_short_gestation_raw_bw_exposure':
-                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.exposure')(pop_index)['birth_weight'] ,
-                          'low_birth_weight_and_short_gestation_raw_gestation_exposure':
-                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.exposure')(pop_index)['gestation'],
+                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['birth_weight'] ,
+                          'low_birth_weight_and_short_gestation_raw_gt_exposure':
+                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['gestation_time'],
                           'diarrheal_diseases_incidence_rate':
                               builder.value.get_value('diarrheal_diseases.incidence_rate'),
                           'lower_respiratory_infections_incidence_rate':
