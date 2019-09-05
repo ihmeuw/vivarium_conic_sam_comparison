@@ -48,6 +48,7 @@ components:
             - InterventionEffect("TF_SAM", 'risk_factor.child_wasting.exposure')
             - InterventionEffect("TF_SAM", 'risk_factor.child_stunting.exposure')
             - NeonatalPreterm()
+            - SampleHistoryObserver()
 
     vivarium_public_health.disease:
         special_disease:
@@ -78,9 +79,13 @@ configuration:
             day: 31
         step_size: 1 # Days
     population:
-        population_size: 1_000
+        population_size: 10_000
         age_start: 0
         age_end: 100
+    metrics:
+        sample_history_observer:
+            sample_size: 500
+            path: /share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history_{{ location }}.hdf
 
     child_stunting:
         category_thresholds: [7, 8, 9]
