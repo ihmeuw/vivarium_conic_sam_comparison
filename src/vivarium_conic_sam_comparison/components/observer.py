@@ -18,7 +18,7 @@ class SampleHistoryObserver:
 
     def __init__(self):
         self.history_snapshots = []
-        self.sample_index = None
+        self.sample_index = pd.Index([])
 
     def setup(self, builder):
         self.clock = builder.time.clock()
@@ -83,9 +83,12 @@ class SampleHistoryObserver:
         sample_size = self.sample_history_parameters.sample_size
         if sample_size is None or sample_size > len(pop_data.index):
             sample_size = len(pop_data.index)
+        # TODO: Do we want to sample only "interesting" simulants?
         draw = self.randomness.get_draw(pop_data.index)
         priority_index = [i for d, i in sorted(zip(draw, pop_data.index), key=lambda x:x[0])]
-        self.sample_index = pd.Index(priority_index[:sample_size])
+        # FIXME: How should we handle people born in sim? Not going to right now
+        if len(self.sample_index) == 0:
+            self.sample_index = pd.Index(priority_index[:sample_size])
 
     def record(self, event):
         pop = self.population_view.get(self.sample_index)
