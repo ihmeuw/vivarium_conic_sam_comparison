@@ -7,7 +7,7 @@ class MaternalTreatmentAlgorithm:
 
     configuration_defaults = {
         "maternal_intervention": {
-            "proportion": 0.8,
+            "coverage_proportion": 0.8,
             "start_date": {
                 "year": 2020,
                 "month": 1,
@@ -29,10 +29,9 @@ class MaternalTreatmentAlgorithm:
         config = builder.configuration[f"{self.intervention_name}_intervention"]
         self.clock = builder.time.clock()
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
-        self.proportion = config.proportion
+        self.proportion = config['coverage_proportion']
 
         self.enrollment_randomness = builder.randomness.get_stream(f'{self.intervention_name}_enrollment')
-        self.effect_randomness = builder.randomness.get_stream('effect_draw')
 
         columns_created = [f'{self.intervention_name}_treatment_start']
         self.population_view = builder.population.get_view(columns_created)
@@ -60,7 +59,8 @@ class NeonatalTreatmentAlgorithm:
     configuration_defaults = {
         "neonatal_intervention": {
             "whz_target": "all",  # Z-score float or 'all'. Sims at or below eligible
-            "proportion": 0.8,
+            "coverage_proportion": 0.8,
+            "treatment_duration": 365.25,  # days
             "start_date": {
                 "year": 2020,
                 "month": 1,
@@ -84,18 +84,20 @@ class NeonatalTreatmentAlgorithm:
 
     def setup(self, builder):
         config = builder.configuration[f"{self.intervention_name}_intervention"]
-        self.whz_target = config.whz_target
+        self.whz_target = config['whz_target']
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.treatment_age = config['treatment_age']
-        self.coverage = config['proportion']
+        self.coverage = config['coverage_proportion']
+        self.treatment_duration = pd.Timedelta(days=config['treatment_duration'])
 
         self.clock = builder.time.clock()
 
-        self.rand = builder.randomness.get_stream(f"{self.intervention_name}_enrollment")
+        self.enrollment_randomness = builder.randomness.get_stream(f"{self.intervention_name}_enrollment")
 
         self.wasting_exposure = builder.value.get_value(f'child_wasting.exposure')
 
-        created_columns = [f'{self.intervention_name}_treatment_start']
+        created_columns = [f'{self.intervention_name}_treatment_start',
+                           f'{self.intervention_name}_treatment_end']
         required_columns = ['age']
         self.pop_view = builder.population.get_view(created_columns + required_columns)
         builder.population.initializes_simulants(self.on_initialize_simulants,
@@ -110,7 +112,8 @@ class NeonatalTreatmentAlgorithm:
             raise NotImplementedError(f"{self.intervention_name} intervention must begin strictly "
                                       f"after the intervention start date.")
 
-        pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT},
+        pop = pd.DataFrame({f'{self.intervention_name}_treatment_start': pd.NaT,
+                            f'{self.intervention_name}_treatment_end': pd.NaT},
                            index=pop_data.index)
         self.pop_view.update(pop)
 
@@ -119,20 +122,22 @@ class NeonatalTreatmentAlgorithm:
         treated_idx = self.get_treated_idx(pop, event)
 
         pop.loc[treated_idx, f'{self.intervention_name}_treatment_start'] = event.time
+        pop.loc[treated_idx, f'{self.intervention_name}_treatment_end'] = event.time + self.treatment_duration
         self.pop_view.update(pop)
 
     def get_treated_idx(self, pop: pd.DataFrame, event: Event):
+        # Intervention hasn't started
+        if event.time < self.start_date:
+            return pd.Index([])
+
         # Eligible by age
         pop_age_at_event = pop.age + (event.step_size / pd.Timedelta(days=365.25))
-        if self.clock() < self.start_date <= event.time:
-            # mass treatment when intervention starts
+        if self.clock() < self.start_date:  # Treatment available this time_step
+            # mass treatment of anyone in age range when intervention starts
             eligible_mask = (self.treatment_age['start'] <= pop['age']) & (pop['age'] <= self.treatment_age['end'])
-        elif self.start_date <= self.clock():
-            # continuous enrollment of those crossing the boundary
+        else:  # past treatment start
+            # continuous enrollment of those crossing the age threshold
             eligible_mask = (pop.age < self.treatment_age['start']) & (self.treatment_age['start'] <= pop_age_at_event)
-        else:
-            # Intervention hasn't started.
-            return pd.Index([])
 
         # Eligible by target
         if self.whz_target != 'all':
@@ -141,5 +146,5 @@ class NeonatalTreatmentAlgorithm:
         # Filter already treated
         eligible_mask &= pd.isnull(pop[f'{self.intervention_name}_treatment_start'])
 
-        return self.rand.filter_for_probability(pop.loc[eligible_mask].index, self.coverage)
+        return self.enrollment_randomness.filter_for_probability(pop.loc[eligible_mask].index, self.coverage)
 
