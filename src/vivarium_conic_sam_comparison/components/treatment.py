@@ -88,7 +88,7 @@ class NeonatalTreatmentAlgorithm:
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.treatment_age = config['treatment_age']
         self.coverage = config['coverage_proportion']
-        self.treatment_duration = config['treatment_duration']
+        self.treatment_duration = pd.Timedelta(days=config['treatment_duration'])
 
         self.clock = builder.time.clock()
 
