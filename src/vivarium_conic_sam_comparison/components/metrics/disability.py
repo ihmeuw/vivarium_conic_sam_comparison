@@ -23,6 +23,10 @@ class WHZDisabilityObserver(Disability):
 
     def on_time_step_prepare(self, event):
         # Almost the same process, just additionally subset by WHZ.
+        if not self.config.by_whz:
+            super().on_time_step_prepare(event)
+            return
+
         whz_exposure = self.whz_exposure(event.index)
         pop = self.population_view.get(event.index, query='tracked == True and alive == "alive"')
         for cat in whz_exposure.unique():
@@ -37,3 +41,4 @@ class WHZDisabilityObserver(Disability):
 
             pop.loc[cat_idx, 'years_lived_with_disability'] += self.disability_weight(pop_for_cat.index)
             self.population_view.update(pop)
+
