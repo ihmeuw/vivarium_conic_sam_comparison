@@ -33,8 +33,8 @@ class WHZDisabilityObserver(Disability):
             super().on_time_step_prepare(event)
             return
 
-        whz_exposure = self.whz_exposure(event.index)
         pop = self.population_view.get(event.index, query='tracked == True and alive == "alive"')
+        whz_exposure = self.whz_exposure(pop.index)
         for cat in whz_exposure.unique():
             pop_for_cat = pop.loc[whz_exposure == cat]
 
