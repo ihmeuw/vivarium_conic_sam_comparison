@@ -6,11 +6,22 @@ from vivarium_public_health.utilities import TargetString
 
 
 class InterventionEffect:
+    """An additive shift effect with optional population- and individual-level
+    randomness and optional logistic ramps up and down in effect size. Effect
+    begins when treatment start as defined by the state table column
+    '{intervention}_treatment_start'].
+
+    We can describe the length of an effect in absolute terms or relative to the
+    treatment period. Because specification of treatment length and its
+    relationship to the effect is relatively unclear or apparently malleable for
+    some interventions in this model, and because the researchers fully describe
+    the course of the effect and not treatment, we choose to fully parametrize
+    the effect durations. We only assume the effect starts when treatment does
+    and require no other information.
+    """
     configuration_defaults = {
         "intervention": {
             "effect": {
-                "duration": 365.25,  # Float days or 'permanent'.  Inclusive of ramp up/down.
-                                     # Permanent overrides ramp down.
                 "population": {
                     "mean": 0.0,
                     "sd": 0.0
@@ -19,7 +30,8 @@ class InterventionEffect:
                     "sd": 0.0
                 },
                 "ramp_up_duration": 0,  # Length of logistic ramp up in days.
-                "ramp_down_duration": 0,  # """
+                "full_effect_duration": 28,  # Length of full effect in days, or 'permanent'.
+                "ramp_down_duration": 0,  # Length of logistic ramp down in days.
             }
         }
     }
@@ -36,8 +48,17 @@ class InterventionEffect:
         return f'{self.intervention_name}_effect_on_{self.target.name}'
 
     def setup(self, builder):
-        self.config = builder.configuration[f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
-        self.duration = pd.Timedelta(days=self.config['duration']) if isinstance(self.config['duration'], float) else self.config['duration']
+        config = builder.configuration[f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
+
+        self.ramp_up_duration = pd.Timedelta(days=config['ramp_up_duration'])
+        self.permanent = True if config['full_effect_duration'] == 'permanent' else False
+        self.full_effect_duration = pd.Timedelta(days=config['full_effect_duration']) if not self.permanent else config['full_effect_duration']
+        self.ramp_down_duration = pd.Timedelta(days=config['ramp_down_duration'])
+
+        self.population_mean = config['population']['mean']
+        self.population_sd = config['population']['sd']
+        self.individual_sd = config['individual']['sd']
+
         self.clock = builder.time.clock()
 
         self._effect_size = pd.Series()
@@ -46,30 +67,20 @@ class InterventionEffect:
 
         builder.value.register_value_modifier(f'{self.target.name}.{self.target.measure}', self.adjust_exposure)
 
-        created_columns = [f'{self.intervention_name}_{self.target.name}_effect_end']
         required_columns = [f'{self.intervention_name}_treatment_start']
         builder.population.initializes_simulants(self.on_initialize_simulants,
-                                                 creates_columns=created_columns,
                                                  requires_columns=required_columns)
-        self.pop_view = builder.population.get_view(created_columns + required_columns)
+        self.pop_view = builder.population.get_view(required_columns)
 
-        self.population_effect = self.get_population_effect_size(self.config.population.mean,
-                                                                 self.config.population.sd,
+        self.population_effect = self.get_population_effect_size(self.population_mean,
+                                                                 self.population_sd,
                                                                  'population_effect')
 
     def on_initialize_simulants(self, pop_data):
         individual_effect = self.get_individual_effect_size(pop_data.index, self.population_effect,
-                                                            self.config.individual.sd,
+                                                            self.individual_sd,
                                                             'individual_effect')
         self._effect_size = self._effect_size.append(individual_effect)
-
-        if self.duration == 'permanent':
-            pop = pd.DataFrame({f'{self.intervention_name}_{self.target.name}_effect_end': pd.NaT}, index=pop_data.index)
-        else:
-            pop = self.pop_view.subview([f'{self.intervention_name}_treatment_start']).get(pop_data.index)
-            pop[f'{self.intervention_name}_{self.target.name}_effect_end'] = (pop[f'{self.intervention_name}_treatment_start'] +
-                                                                              self.duration)
-        self.pop_view.update(pop)
 
     def get_population_effect_size(self, mean, sd, key):
         if sd == 0:
@@ -95,12 +106,8 @@ class InterventionEffect:
         effect_size.loc[untreated] = 0
         effect_size.loc[ramp_up] = self.ramp_efficacy(ramp_up)
         effect_size.loc[full_effect] = self._effect_size.loc[full_effect]
-        if self.duration == 'permanent':
-            effect_size.loc[ramp_down] = self._effect_size[ramp_down]
-            effect_size.loc[post_effect] = self._effect_size[post_effect]
-        else:
-            effect_size.loc[ramp_down] = self.ramp_efficacy(ramp_down, invert=True)
-            effect_size.loc[post_effect] = 0
+        effect_size.loc[ramp_down] = self.ramp_efficacy(ramp_down, invert=True)
+        effect_size.loc[post_effect] = 0
 
         # FIXME: Hack for lbwsg weirdness for now
         if self.target.name == 'low_birth_weight_and_short_gestation':
@@ -110,23 +117,29 @@ class InterventionEffect:
         return exposure
 
     def get_treatment_groups(self, index):
-        ramp_up_duration = pd.Timedelta(days=self.config.ramp_up_duration)
-        ramp_down_duration = pd.Timedelta(days=self.config.ramp_down_duration)
-
         pop = self.pop_view.get(index)
-        untreated = pop.loc[(pop[f'{self.intervention_name}_treatment_start'].isnull())
-                            | (self.clock() <= pop[f'{self.intervention_name}_treatment_start'])].index
 
-        ramp_up = pop.loc[(pop[f'{self.intervention_name}_treatment_start'] < self.clock())
-                          & (self.clock() < pop[f'{self.intervention_name}_treatment_start'] + ramp_up_duration)].index
+        # effect pattern transition boundaries
+        begin_ramp_up = pop[f'{self.intervention_name}_treatment_start']
+        begin_full_effect = pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
+        begin_ramp_down = (pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
+                                                                            + self.full_effect_duration)
+        end_ramp_down = (pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
+                                                                          + self.full_effect_duration
+                                                                          + self.ramp_down_duration)
 
-        full_effect = pop.loc[(pop[f'{self.intervention_name}_treatment_start'] + ramp_up_duration <= self.clock())
-                              & (self.clock() <= pop[f'{self.intervention_name}_{self.target.name}_effect_end'] - ramp_down_duration)].index
+        untreated = pop.loc[(pop[f'{self.intervention_name}_treatment_start'].isnull()) |
+                            (self.clock() < begin_ramp_up)].index
 
-        ramp_down = pop.loc[(pop[f'{self.intervention_name}_{self.target.name}_effect_end'] - ramp_down_duration < self.clock())
-                            & (self.clock() < pop[f'{self.intervention_name}_{self.target.name}_effect_end'])].index
-
-        post_effect = pop.loc[pop[f'{self.intervention_name}_{self.target.name}_effect_end'] <= self.clock()].index
+        ramp_up = pop.loc[(begin_ramp_up <= self.clock()) & (self.clock() < begin_full_effect)].index
+        if self.permanent:
+            full_effect = pop.loc[begin_full_effect <= self.clock()].index
+            ramp_down = pd.Index([])
+            post_effect = pd.Index([])
+        else:
+            full_effect = pop.loc[(begin_full_effect <= self.clock()) & (self.clock() < begin_ramp_down)].index
+            ramp_down = pop.loc[(begin_ramp_down <= self.clock()) & (self.clock() < end_ramp_down)].index
+            post_effect = pop.loc[end_ramp_down <= self.clock()].index
 
         return untreated, ramp_up, full_effect, ramp_down, post_effect
 
