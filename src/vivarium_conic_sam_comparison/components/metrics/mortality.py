@@ -17,7 +17,7 @@ class WHZMortalityObserver(MortalityObserver):
             'cat2': '-3_to_-2',
             'cat3': '-2_to_-1',
             'cat4': 'unexposed'
-        }                                                                              }
+        }
     
     @property
     def name(self):
@@ -40,7 +40,7 @@ class WHZMortalityObserver(MortalityObserver):
         metrics['total_population_living'] = len(the_living)
 
         whz_exposure = self.whz_exposure(pop.index)
-        for cat in whz_exposure.unique()
+        for cat in whz_exposure.unique():
             pop_for_cat = pop.loc[whz_exposure == cat]
 
             person_time = get_person_time(pop_for_cat, self.config.to_dict(), self.start_time, self.clock(),
