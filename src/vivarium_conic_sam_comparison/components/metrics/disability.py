@@ -73,9 +73,9 @@ class CatStratRiskObserver:
                     'month': 7,
                     'day': 1
                 },
-                'by_age': True,
-                'by_sex': True,
-                'by_year': True,
+                'by_age': False,
+                'by_sex': False,
+                'by_year': False,
             }
         }
     }
