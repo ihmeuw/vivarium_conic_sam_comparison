@@ -25,7 +25,7 @@ class WHZDisabilityObserver(Disability):
 
     def setup(self, builder):
         super().setup(builder)
-        self.whz_exposure = builder.value.get_value('child_stunting.exposure')
+        self.whz_exposure = builder.value.get_value('child_wasting.exposure')
 
     def on_time_step_prepare(self, event):
         # Almost the same process, just additionally subset by WHZ cat before using utilities.
