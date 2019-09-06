@@ -122,11 +122,6 @@ class InterventionEffect:
         # effect pattern transition boundaries
         begin_ramp_up = pop[f'{self.intervention_name}_treatment_start']
         begin_full_effect = pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
-        begin_ramp_down = (pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
-                                                                            + self.full_effect_duration)
-        end_ramp_down = (pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
-                                                                          + self.full_effect_duration
-                                                                          + self.ramp_down_duration)
 
         untreated = pop.loc[(pop[f'{self.intervention_name}_treatment_start'].isnull()) |
                             (self.clock() < begin_ramp_up)].index
@@ -137,6 +132,12 @@ class InterventionEffect:
             ramp_down = pd.Index([])
             post_effect = pd.Index([])
         else:
+            begin_ramp_down = (pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
+                                                                                + self.full_effect_duration)
+            end_ramp_down = (pop[f'{self.intervention_name}_treatment_start'] + self.ramp_up_duration
+                                                                              + self.full_effect_duration
+                                                                              + self.ramp_down_duration)
+
             full_effect = pop.loc[(begin_full_effect <= self.clock()) & (self.clock() < begin_ramp_down)].index
             ramp_down = pop.loc[(begin_ramp_down <= self.clock()) & (self.clock() < end_ramp_down)].index
             post_effect = pop.loc[end_ramp_down <= self.clock()].index
