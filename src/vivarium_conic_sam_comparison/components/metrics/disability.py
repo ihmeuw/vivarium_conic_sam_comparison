@@ -12,6 +12,12 @@ class WHZDisabilityObserver(Disability):
 
     def __init__(self):
         super().__init__()
+        self.readable_cats = {
+                'cat1': 'lt_-3',
+                'cat2': '-3_to_-2',
+                'cat3': '-2_to_-1',
+                'cat4': 'unexposed'
+        }
 
     @property
     def name(self):
@@ -22,7 +28,7 @@ class WHZDisabilityObserver(Disability):
         self.whz_exposure = builder.value.get_value('child_stunting.exposure')
 
     def on_time_step_prepare(self, event):
-        # Almost the same process, just additionally subset by WHZ.
+        # Almost the same process, just additionally subset by WHZ cat before using utilities.
         if not self.config.by_whz:
             super().on_time_step_prepare(event)
             return
@@ -30,15 +36,14 @@ class WHZDisabilityObserver(Disability):
         whz_exposure = self.whz_exposure(event.index)
         pop = self.population_view.get(event.index, query='tracked == True and alive == "alive"')
         for cat in whz_exposure.unique():
-            cat_idx = (whz_exposure == cat).index
-            pop_for_cat = pop.loc[cat_idx]
+            pop_for_cat = pop.loc[whz_exposure == cat]
 
             ylds_this_step = get_years_lived_with_disability(pop_for_cat, self.config.to_dict(),
                                                              self.clock().year, self.step_size(),
                                                              self.age_bins, self.disability_weight_pipelines, self.causes)
-            ylds_this_step = {key + f'_in_whz_cat_{cat}': value for key, value in ylds_this_step.items()}
+            ylds_this_step = {key + f'_in_whz_{self.readable_cats[cat]}': value for key, value in ylds_this_step.items()}
             self.years_lived_with_disability.update(ylds_this_step)
 
-            pop.loc[cat_idx, 'years_lived_with_disability'] += self.disability_weight(pop_for_cat.index)
+            pop.loc[pop_for_cat.index, 'years_lived_with_disability'] += self.disability_weight(pop_for_cat.index)
             self.population_view.update(pop)
 
