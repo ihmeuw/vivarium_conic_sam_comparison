@@ -54,16 +54,27 @@ class SampleHistoryObserver:
         # keys will become column names in the output
         self.pipelines = {'mortality_rate': builder.value.get_value('mortality_rate'),
 #                          'disability_weight': builder.value.get_value('disability_weight'),
+
                           'child_wasting_exposure': builder.value.get_value('child_wasting.exposure'),
                           'child_wasting_raw_exposure': lambda pop_index: builder.value.get_value('child_wasting.exposure')(pop_index, skip_post_processor=True),
+                          'child_wasting_raw_exposure_baseline': lambda pop_index: builder.value.get_value('child_wasting.exposure').source(pop_index),
+
                           'child_stunting_exposure': builder.value.get_value('child_stunting.exposure'),
                           'child_stunting_raw_exposure': lambda pop_index: builder.value.get_value('child_stunting.exposure')(pop_index, skip_post_processor=True),
-                          'low_birth_weight_and_short_gestation_exposure':
-                              builder.value.get_value('low_birth_weight_and_short_gestation.exposure'),
+                          'child_stunting_raw_exposure_baseline': lambda pop_index: builder.value.get_value('child_stunting.exposure').source(pop_index),
+
+                          'low_birth_weight_and_short_gestation_exposure': builder.value.get_value('low_birth_weight_and_short_gestation.exposure'),
+
                           'low_birth_weight_and_short_gestation_raw_bw_raw_exposure':
-                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['birth_weight'] ,
+                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['birth_weight'],
+                          'low_birth_weight_and_short_gestation_raw_bw_raw_exposure_baseline':
+                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure').source(pop_index)['birth_weight'],
+
                           'low_birth_weight_and_short_gestation_raw_gt_raw_exposure':
                               lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure')(pop_index)['gestation_time'],
+                          'low_birth_weight_and_short_gestation_raw_gt_raw_exposure_baseline':
+                              lambda pop_index: builder.value.get_value('low_birth_weight_and_short_gestation.raw_exposure').source(pop_index)['gestation_time'],
+
                           'diarrheal_diseases_incidence_rate':
                               builder.value.get_value('diarrheal_diseases.incidence_rate'),
                           'lower_respiratory_infections_incidence_rate':
@@ -94,11 +105,6 @@ class SampleHistoryObserver:
                 values = values.sum(axis=1)
             values = values.rename(name)
             pipeline_results.append(values)
-
-            if 'raw_exposure' in name:
-                baseline_values = pipeline.source(pop.index)
-                baseline_values = baseline_values.rename(f'{name}_baseline')
-                pipeline_results.append(baseline_values)
 
         record = pd.concat(pipeline_results + [pop], axis=1)
         record['time'] = self.clock()
