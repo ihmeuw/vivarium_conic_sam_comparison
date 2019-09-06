@@ -97,7 +97,7 @@ class SampleHistoryObserver:
 
             if 'raw_exposure' in name:
                 baseline_values = pipeline.source(pop.index)
-                baseline_values = raw_values.rename(f'{name}_baseline')
+                baseline_values = baseline_values.rename(f'{name}_baseline')
                 pipeline_results.append(baseline_values)
 
         record = pd.concat(pipeline_results + [pop], axis=1)
