@@ -1,1 +1,1 @@
-from .disability import WHZDisabilityObserver
+from .disability import WHZDisabilityObserver, CatStratRiskObserver
