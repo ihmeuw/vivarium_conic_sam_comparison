@@ -78,7 +78,7 @@ configuration:
             day: 31
         step_size: 1 # Days
     population:
-        population_size: 1_000
+        population_size: 10_000
         age_start: 0
         age_end: 100
 
@@ -93,43 +93,44 @@ configuration:
         recoverable : True
 
     BEP_intervention:
-        proportion: 0.8
+        coverage_proportion: 0.8
         start_date:
             year: 2020
             month: 1
             day: 15
 
         effect_on_low_birth_weight_and_short_gestation:  # Only affects bw
-            duration: permanent  # Days or "permanent"
             population:
                 mean: 100.0
                 sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 0  # Days
+            full_effect_duration: permanent  # Days or permanent
             ramp_down_duration: 0  # Days
         effect_on_child_wasting:
-            duration: permanent  # Days or "permanent"
             population:
                 mean: 0.3
                 sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 0  # Days
+            full_effect_duration: permanent  # Days or permanent
             ramp_down_duration: 0  # Days
         effect_on_child_stunting:
-            duration: permanent  # Days or "permanent"
             population:
                 mean: 0.0
                 sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 0  # Days
+            full_effect_duration: permanent  # Days or permanent
             ramp_down_duration: 0  # Days
 
     SQ_LNS_intervention:  # No one can be treated multiple times
         whz_target: all   # Z-score float or "all". WHZ <= target are eligible
-        proportion: 0.8
+        coverage_proportion: 0.8
+        treatment_duration: 365.25  # Days
         start_date:
             year: 2020
             month: 1
@@ -139,36 +140,37 @@ configuration:
            end: 1.0
 
         effect_on_child_wasting:
-            duration: 425.25 # Days. One year and two months
             population:
                 mean: 0.07
                 sd: 0.041
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
+            full_effect_duration: 305.25 # Days or permanent. One year minus two months
             ramp_down_duration: 60  # Days. Two months
         effect_on_child_stunting:
-            duration: 425.25 # Days. One year and two months
             population:
                 mean: 0.10
                 sd: 0.051
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
+            full_effect_duration: 305.25 # Days or permanent. One year minus two months
             ramp_down_duration: 60  # Days. Two months
         effect_on_iron_deficiency:
-            duration: 425.25 # Days. One year and two months
             population:
                 mean: 4.475
                 sd: 0.328
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
+            full_effect_duration: 305.25 # Days or permanent. One year minus two months
             ramp_down_duration: 60  # Days. Two months
 
     TF_SAM_intervention:  # No one can be treated multiple times
         whz_target: -3.0  # Z-score float or "all". WHZ <= target are eligible
-        proportion: 0.8
+        coverage_proportion: 0.8
+        treatment_duration: 7  # Days
         start_date:
             year: 2020
             month: 1
@@ -178,22 +180,22 @@ configuration:
            end: 5.0
 
         effect_on_child_wasting:
-            duration: 104 # Days. Three months and two weeks
             population:
                 mean: 0.4
                 sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 7  # Days. One week
+            full_effect_duration: 83  # Days or permanent. Three months minus one week
             ramp_down_duration: 14  # Days. Two weeks
         effect_on_child_stunting:
-            duration: 104  # Days. Three months and two weeks
             population:
                 mean: 0.0
                 sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 7  # Days. One week
+            full_effect_duration: 83  # Days or permanent. Three months minus one week
             ramp_down_duration: 14  # Days. Two weeks
 
     metrics:

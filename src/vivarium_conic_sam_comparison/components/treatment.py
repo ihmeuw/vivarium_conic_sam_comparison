@@ -60,7 +60,7 @@ class NeonatalTreatmentAlgorithm:
         "neonatal_intervention": {
             "whz_target": "all",  # Z-score float or 'all'. Sims at or below eligible
             "coverage_proportion": 0.8,
-            "treatment_duration": 365.25,  # days,
+            "treatment_duration": 365.25,  # days
             "start_date": {
                 "year": 2020,
                 "month": 1,
