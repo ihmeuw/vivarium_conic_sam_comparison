@@ -1,0 +1,214 @@
+plugins:
+    optional:
+        data:
+            controller: "vivarium_public_health.dataset_manager.ArtifactManager"
+            builder_interface: "vivarium_public_health.dataset_manager.ArtifactManagerInterface"
+
+components:
+    vivarium_public_health:
+        population:
+            - BasePopulation()
+            - Mortality()
+            - FertilityCrudeBirthRate()
+        disease.models:
+            - SIS('diarrheal_diseases')
+            - SIS('lower_respiratory_infections')
+            - SIR_fixed_duration('measles', '10')  # days
+            - NeonatalSWC_without_incidence('neonatal_sepsis_and_other_neonatal_infections')
+            - NeonatalSWC_without_incidence('neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma')
+            - NeonatalSWC_without_incidence('hemolytic_disease_and_other_neonatal_jaundice')
+        risks:
+            - Risk('alternative_risk_factor.child_wasting')
+            - RiskEffect('risk_factor.child_wasting', 'cause.diarrheal_diseases.incidence_rate')
+            - RiskEffect('risk_factor.child_wasting', 'cause.lower_respiratory_infections.incidence_rate')
+            - RiskEffect('risk_factor.child_wasting', 'cause.measles.incidence_rate')
+
+            - Risk('alternative_risk_factor.child_stunting')
+            - RiskEffect('risk_factor.child_stunting', 'cause.diarrheal_diseases.incidence_rate')
+            - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
+            - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
+
+    vivarium_conic_sam_comparison.components:
+            - IronDeficiencyAnemia()
+            - LBWSGRisk()
+            - LBWSGRiskEffect('cause.neonatal_sepsis_and_other_neonatal_infections.excess_mortality')
+            - LBWSGRiskEffect('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.excess_mortality')
+            - LBWSGRiskEffect('cause.hemolytic_disease_and_other_neonatal_jaundice.excess_mortality')
+            - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality')
+            - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality')
+            - MaternalTreatmentAlgorithm('BEP')
+            - InterventionEffect('BEP', 'risk_factor.low_birth_weight_and_short_gestation.raw_exposure')
+            - InterventionEffect('BEP', 'risk_factor.child_wasting.exposure')
+            - InterventionEffect('BEP', 'risk_factor.child_stunting.exposure')
+            - NeonatalTreatmentAlgorithm('SQ_LNS')
+            - InterventionEffect('SQ_LNS', 'risk_factor.child_wasting.exposure')
+            - InterventionEffect('SQ_LNS', 'risk_factor.child_stunting.exposure')
+            - InterventionEffect('SQ_LNS', 'risk_factor.iron_deficiency.exposure')
+            - NeonatalTreatmentAlgorithm("TF_SAM")
+            - InterventionEffect("TF_SAM", 'risk_factor.child_wasting.exposure')
+            - InterventionEffect("TF_SAM", 'risk_factor.child_stunting.exposure')
+            - NeonatalPreterm()
+            - SampleHistoryObserver()
+
+    vivarium_public_health.disease:
+        special_disease:
+             - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
+
+
+
+configuration:
+    input_data:
+        location:  Mali
+        input_draw_number: 0
+        artifact_path: /share/costeffectiveness/artifacts/vivarium_conic_sam_comparison/vivarium_conic_sam_comparison_Mali.hdf
+    interpolation:
+        order: 0
+        extrapolate: True
+    randomness:
+        map_size: 1_000_000
+        key_columns: ['entrance_time']
+        random_seed: 0
+    time:
+        start:
+            year: 2020
+            month: 1
+            day: 1
+        end:
+            year: 2025
+            month: 12
+            day: 31
+        step_size: 1 # Days
+    population:
+        population_size: 10_000
+        age_start: 0
+        age_end: 100
+
+    child_stunting:
+        category_thresholds: [7, 8, 9]
+    child_wasting:
+        category_thresholds: [7, 8, 9]
+
+    protein_energy_malnutrition:
+        threshold : ['cat1', 'cat2']
+        mortality : True
+        recoverable : True
+
+    BEP_intervention:
+        coverage_proportion: 0.0
+        start_date:
+            year: 2020
+            month: 1
+            day: 15
+
+        effect_on_low_birth_weight_and_short_gestation:  # Only affects bw
+            population:
+                mean: 100.0
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 0  # Days
+            full_effect_duration: permanent  # Days or permanent
+            ramp_down_duration: 0  # Days
+        effect_on_child_wasting:
+            population:
+                mean: 0.3
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 0  # Days
+            full_effect_duration: permanent  # Days or permanent
+            ramp_down_duration: 0  # Days
+        effect_on_child_stunting:
+            population:
+                mean: 0.0
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 0  # Days
+            full_effect_duration: permanent  # Days or permanent
+            ramp_down_duration: 0  # Days
+
+    SQ_LNS_intervention:  # No one can be treated multiple times
+        whz_target: all   # Z-score float or "all". WHZ <= target are eligible
+        coverage_proportion: 0.0
+        treatment_duration: 365.25  # Days
+        start_date:
+            year: 2020
+            month: 1
+            day: 15
+        treatment_age:
+           start: 0.5
+           end: 1.0
+
+        effect_on_child_wasting:
+            population:
+                mean: 0.07
+                sd: 0.041
+            individual:
+                sd: 0.0
+            ramp_up_duration: 60  # Days. Two months
+            full_effect_duration: 305.25 # Days or permanent. One year minus two months
+            ramp_down_duration: 60  # Days. Two months
+        effect_on_child_stunting:
+            population:
+                mean: 0.10
+                sd: 0.051
+            individual:
+                sd: 0.0
+            ramp_up_duration: 60  # Days. Two months
+            full_effect_duration: 305.25 # Days or permanent. One year minus two months
+            ramp_down_duration: 60  # Days. Two months
+        effect_on_iron_deficiency:
+            population:
+                mean: 4.475
+                sd: 0.328
+            individual:
+                sd: 0.0
+            ramp_up_duration: 60  # Days. Two months
+            full_effect_duration: 305.25 # Days or permanent. One year minus two months
+            ramp_down_duration: 60  # Days. Two months
+
+    TF_SAM_intervention:  # No one can be treated multiple times
+        whz_target: -3.0  # Z-score float or "all". WHZ <= target are eligible
+        coverage_proportion: 0.8
+        treatment_duration: 7  # Days
+        start_date:
+            year: 2020
+            month: 1
+            day: 15
+        treatment_age:
+           start: 0.5
+           end: 5.0
+
+        effect_on_child_wasting:
+            population:
+                mean: 0.4
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 7  # Days. One week
+            full_effect_duration: 83  # Days or permanent. Three months minus one week
+            ramp_down_duration: 14  # Days. Two weeks
+        effect_on_child_stunting:
+            population:
+                mean: 0.0
+                sd: 0.0
+            individual:
+                sd: 0.0
+            ramp_up_duration: 7  # Days. One week
+            full_effect_duration: 83  # Days or permanent. Three months minus one week
+            ramp_down_duration: 14  # Days. Two weeks
+
+    metrics:
+        disability:
+            by_age: False
+            by_sex: False
+            by_year: False
+        mortality:
+            by_age: False
+            by_sex: False
+            by_year: False
+        sample_history_observer:
+            sample_size: 1000
+            path: /share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history_tfsam_mali.hdf
+
