@@ -1,6 +1,6 @@
 from vivarium_public_health.metrics.disability import Disability
 from vivarium_public_health.metrics.utilities import get_years_lived_with_disability
-from vivarium_conic_sam_comparison.components.metrics import convert_whz_to_categorical
+from vivarium_conic_sam_comparison.components.metrics.utilities import convert_whz_to_categorical
 
 
 class WHZDisabilityObserver(Disability):
