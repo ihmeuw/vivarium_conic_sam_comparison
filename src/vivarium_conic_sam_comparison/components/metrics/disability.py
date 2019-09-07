@@ -1,10 +1,5 @@
-from collections import Counter
-import pandas as pd
-
-from vivarium_public_health.utilities import EntityString
 from vivarium_public_health.metrics.disability import Disability
 from vivarium_public_health.metrics.utilities import get_years_lived_with_disability
-from vivarium_public_health.metrics.utilities import get_age_sex_filter_and_iterables, get_age_bins, get_output_template
 
 
 class WHZDisabilityObserver(Disability):
