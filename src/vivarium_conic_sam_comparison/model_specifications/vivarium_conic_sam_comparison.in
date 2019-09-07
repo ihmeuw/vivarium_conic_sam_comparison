@@ -58,11 +58,8 @@ components:
              - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
 
     vivarium_conic_sam_comparison.components.metrics:
+            - WHZDisabilityObserver()
             - WHZMortalityObserver()
-
-    vivarium_public_health.metrics:
-            - Disability()
-
 
 {% set location = location.replace(" ", "_").replace("'", "").lower() %}
 configuration:
@@ -213,6 +210,7 @@ configuration:
             by_age: False
             by_sex: False
             by_year: False
+            by_whz: True
         mortality:
             by_age: False
             by_sex: False
