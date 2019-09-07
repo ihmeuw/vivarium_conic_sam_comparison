@@ -56,6 +56,10 @@ components:
     vivarium_conic_sam_comparison.components.metrics:
             - WHZMortalityObserver()
 
+    vivarium_public_health.metrics:
+            - Disability()
+
+
 {% set location = location.replace(" ", "_").replace("'", "").lower() %}
 configuration:
     input_data:
