@@ -214,3 +214,11 @@ configuration:
             by_age: False
             by_sex: False
             by_year: False
+        child_stunting_observer:
+            by_age: False
+            by_sex: False
+            by_year: False
+        child_wasting_observer:
+            by_age: False
+            by_sex: False
+            by_year: False
