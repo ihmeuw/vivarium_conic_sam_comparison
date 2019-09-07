@@ -49,6 +49,10 @@ components:
             - InterventionEffect("TF_SAM", 'risk_factor.child_stunting.exposure')
             - NeonatalPreterm()
 
+    vivarium_conic_sam_comparison.components.metrics:
+            - CatStratRiskObserver("risk_factor.child_stunting")
+            - CatStratRiskObserver("risk_factor.child_wasting")
+
     vivarium_public_health.disease:
         special_disease:
              - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
@@ -207,6 +211,14 @@ configuration:
             by_sex: False
             by_year: False
         mortality:
+            by_age: False
+            by_sex: False
+            by_year: False
+        child_stunting_observer:
+            by_age: False
+            by_sex: False
+            by_year: False
+        child_wasting_observer:
             by_age: False
             by_sex: False
             by_year: False

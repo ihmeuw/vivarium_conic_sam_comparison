@@ -46,4 +46,3 @@ class WHZDisabilityObserver(Disability):
 
             pop.loc[pop_for_cat.index, 'years_lived_with_disability'] += self.disability_weight(pop_for_cat.index)
             self.population_view.update(pop)
-
