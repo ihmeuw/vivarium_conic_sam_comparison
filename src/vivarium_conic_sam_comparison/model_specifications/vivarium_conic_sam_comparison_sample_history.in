@@ -210,4 +210,5 @@ configuration:
             by_year: False
         sample_history_observer:
             sample_size: 1000
+            fraction_initial_pop: 0.75
             path: /share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history_{{ location }}.hdf
