@@ -37,7 +37,7 @@ class WHZDisabilityObserver(Disability):
             ylds_this_step = get_years_lived_with_disability(pop_for_cat, self.config.to_dict(),
                                                              self.clock().year, self.step_size(),
                                                              self.age_bins, self.disability_weight_pipelines, self.causes)
-            ylds_this_step = {key + f'_in_whz_{cat}': value for key, value in ylds_this_step.items()}
+            ylds_this_step = {key + f'_in_{cat}': value for key, value in ylds_this_step.items()}
             self.years_lived_with_disability.update(ylds_this_step)
 
             pop.loc[pop_for_cat.index, 'years_lived_with_disability'] += self.disability_weight(pop_for_cat.index)
