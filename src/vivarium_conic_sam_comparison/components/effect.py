@@ -106,8 +106,9 @@ class InterventionEffect:
         effect_size.loc[untreated] = 0
         effect_size.loc[ramp_up] = self.ramp_efficacy(ramp_up)
         effect_size.loc[full_effect] = self._effect_size.loc[full_effect]
-        effect_size.loc[ramp_down] = self.ramp_efficacy(ramp_down, invert=True)
-        effect_size.loc[post_effect] = 0
+        if not self.permanent:
+            effect_size.loc[ramp_down] = self.ramp_efficacy(ramp_down, invert=True)
+            effect_size.loc[post_effect] = 0
 
         # FIXME: Hack for lbwsg weirdness for now
         if self.target.name == 'low_birth_weight_and_short_gestation':
@@ -180,15 +181,15 @@ class InterventionEffect:
 
         if invert:
             growth_rate = 2 / self.ramp_down_duration.days * np.log(p)
-            ramp_position = ((pop[f'{self.intervention_name}_treatment_start'] + (self.ramp_up_duration / 2))
-                             - self.clock()) / pd.Timedelta(days=1)
+            ramp_position = ((pop[f'{self.intervention_name}_treatment_start']
+                               + self.ramp_up_duration
+                               + self.full_effect_duration
+                               + (self.ramp_down_duration) / 2) - self.clock()) / pd.Timedelta(days=1)
         else:
             growth_rate = 2 / self.ramp_up_duration.days * np.log(p)
             ramp_position = (self.clock()
                              - (pop[f'{self.intervention_name}_treatment_start']
-                                + self.ramp_up_duration
-                                + self.full_effect_duration
-                                + (self.ramp_down_duration / 2))) / pd.Timedelta(days=1)
+                                 + (self.ramp_up_duration) / 2)) / pd.Timedelta(days=1)
 
         scale = 1 / (1 + np.exp(-growth_rate * ramp_position))
         return scale * self._effect_size[index]
