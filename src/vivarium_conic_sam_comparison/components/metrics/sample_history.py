@@ -6,8 +6,7 @@ class SampleHistoryObserver:
     configuration_defaults = {
         'metrics': {
             'sample_history_observer': {
-                'sample_size': 1000,
-                'fraction_initial_pop': 0.75,  # complement taken from born-in pop
+                'sample_fraction': 0.10,  # fraction of new simulants sampled
                 'path': f'/share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history.hdf'
             }
         }
@@ -23,14 +22,14 @@ class SampleHistoryObserver:
 
     def setup(self, builder):
         self.clock = builder.time.clock()
-        self.sample_size = builder.configuration.metrics.sample_history_observer['sample_size']
-        self.fraction_initial_pop = builder.configuration.metrics.sample_history_observer['fraction_initial_pop']
+        self.sample_fraction = builder.configuration.metrics.sample_history_observer['sample_fraction']
+        # self.fraction_initial_pop = builder.configuration.metrics.sample_history_observer['fraction_initial_pop']
         # assume relatively constant births over time.
-        sim_start = pd.Timestamp(**builder.configuration.time.start)
-        sim_end = pd.Timestamp(**builder.configuration.time.end)
-        step_size = pd.Timedelta(days=builder.configuration.time.step_size)
-        self.num_samples_each_step = (self.sample_size
-                                      * (1. - self.fraction_initial_pop) / ((sim_start - sim_end) / step_size))
+        # sim_start = pd.Timestamp(**builder.configuration.time.start)
+        # sim_end = pd.Timestamp(**builder.configuration.time.end)
+        # step_size = pd.Timedelta(days=builder.configuration.time.step_size)
+        # self.num_samples_each_step = (self.sample_size
+        #                               * (1. - self.fraction_initial_pop) / ((sim_start - sim_end) / step_size))
 
         self.path = builder.configuration.metrics.sample_history_observer['path']
         self.randomness = builder.randomness.get_stream("sample_history")
@@ -95,11 +94,9 @@ class SampleHistoryObserver:
         """Sample from the initial pop and those born in the sim."""
         draw = self.randomness.get_draw(pop_data.index)
         priority_index = [i for d, i in sorted(zip(draw, pop_data.index), key=lambda x:x[0])]
-        if len(self.sample_index) == 0:  # sampling initial population
-            initial_sample_size = (self.sample_size * self.fraction_initial_pop)
-            self.sample_index = self.sample_index.append(pd.Index(priority_index[:initial_sample_size]))
-        else:
-            self.sample_index = self.sample_index.append(pd.Index(priority_index[:self.num_samples_each_step]))
+        sample_size = int(self.sample_fraction * len(pop_data.index))
+        sample_size = 1 if sample_size == 0 and len(pop_data.index) > 0 else sample_size
+        self.sample_index = self.sample_index.append(pd.Index(priority_index[:sample_size]))
 
     def record(self, event):
         pop = self.population_view.get(self.sample_index)

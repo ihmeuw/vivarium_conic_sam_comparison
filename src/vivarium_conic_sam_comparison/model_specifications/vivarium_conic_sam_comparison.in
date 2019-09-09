@@ -151,7 +151,7 @@ configuration:
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
-            full_effect_duration: permanent # Days or permanent. One year minus two months
+            full_effect_duration: permanent # Days or permanent.
             ramp_down_duration: 60  # Days. Two months
         effect_on_child_stunting:
             population:
@@ -191,7 +191,7 @@ configuration:
             individual:
                 sd: 0.0
             ramp_up_duration: 7  # Days. One week
-            full_effect_duration: permanent  # Days or permanent. Three months minus one week
+            full_effect_duration: permanent  # Days or permanent.
             ramp_down_duration: 14  # Days. Two weeks
         effect_on_child_stunting:
             population:
@@ -200,7 +200,7 @@ configuration:
             individual:
                 sd: 0.0
             ramp_up_duration: 7  # Days. One week
-            full_effect_duration: permanent  # Days or permanent. Three months minus one week
+            full_effect_duration: permanent  # Days or permanent.
             ramp_down_duration: 14  # Days. Two weeks
 
     metrics:

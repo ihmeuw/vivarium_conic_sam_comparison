@@ -54,7 +54,6 @@ components:
         special_disease:
              - RiskAttributableDisease('cause.protein_energy_malnutrition', 'risk_factor.child_wasting')
 
-
 {% set location = location.replace(" ", "_").replace("'", "").lower() %}
 configuration:
     input_data:
@@ -120,7 +119,7 @@ configuration:
             ramp_down_duration: 0  # Days
         effect_on_child_stunting:
             population:
-                mean: 0.0
+                mean: 0.3
                 sd: 0.0
             individual:
                 sd: 0.0
@@ -131,7 +130,7 @@ configuration:
     SQ_LNS_intervention:  # No one can be treated multiple times
         whz_target: all   # Z-score float or "all". WHZ <= target are eligible
         coverage_proportion: 0.8
-        treatment_duration: 365.25  # Days
+        treatment_duration: 180  # Days
         start_date:
             year: 2020
             month: 1
@@ -147,7 +146,7 @@ configuration:
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
-            full_effect_duration: 305.25 # Days or permanent. One year minus two months
+            full_effect_duration: permanent # Days or permanent.
             ramp_down_duration: 60  # Days. Two months
         effect_on_child_stunting:
             population:
@@ -156,12 +155,12 @@ configuration:
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
-            full_effect_duration: 305.25 # Days or permanent. One year minus two months
+            full_effect_duration: permanent # Days or permanent.
             ramp_down_duration: 60  # Days. Two months
         effect_on_iron_deficiency:
             population:
-                mean: 4.475
-                sd: 0.328
+                mean: 0.0
+                sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 60  # Days. Two months
@@ -187,16 +186,16 @@ configuration:
             individual:
                 sd: 0.0
             ramp_up_duration: 7  # Days. One week
-            full_effect_duration: 83  # Days or permanent. Three months minus one week
+            full_effect_duration: permanent  # Days or permanent.
             ramp_down_duration: 14  # Days. Two weeks
         effect_on_child_stunting:
             population:
-                mean: 0.0
+                mean: 0.4
                 sd: 0.0
             individual:
                 sd: 0.0
             ramp_up_duration: 7  # Days. One week
-            full_effect_duration: 83  # Days or permanent. Three months minus one week
+            full_effect_duration: permanent  # Days or permanent.
             ramp_down_duration: 14  # Days. Two weeks
 
     metrics:
@@ -209,6 +208,5 @@ configuration:
             by_sex: False
             by_year: False
         sample_history_observer:
-            sample_size: 1000
-            fraction_initial_pop: 0.75
+            sample_fraction: 0.10
             path: /share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history_{{ location }}.hdf
