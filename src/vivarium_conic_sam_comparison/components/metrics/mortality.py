@@ -37,7 +37,6 @@ class WHZMortalityObserver(MortalityObserver):
 
         if self.config.by_whz:
             # We want to categorize based on WHZ at death, so we need to track that.
-            # We want to track whz 
             self.whz_at_death_view = builder.population.get_view(['alive', 'whz_at_death'])
             builder.population.initializes_simulants(self.on_initialize_simulants, creates_columns=['whz_at_death'])
             builder.event.register_listener('time_step__prepare', self.on_time_step_prepare)
@@ -61,11 +60,9 @@ class WHZMortalityObserver(MortalityObserver):
             in_cat = pop.loc[whz_exposure == cat]
             base_filter = QueryString('alive == "alive"')
             base_key = get_output_template(**self.config)
-            # base_key += f'_in_whz_group_{cat}'
-            base_key.substitute(measure='person_time', year=self.clock().year)
+            base_key = base_key.substitute(measure='person_time', year=self.clock().year)
             counts = get_group_counts(in_cat, base_filter, base_key, self.config.to_dict(), self.age_bins)
-            counts = {str(key) + f'_in_whz_group_{cat}': value * self.step_size for key, value in counts.items()}
-            # counts *= self.step_size()
+            counts = {str(key) + f'_in_{cat}': value * self.step_size for key, value in counts.items()}
             self.person_time.update(counts)
 
     def metrics(self, index, metrics):
@@ -91,10 +88,9 @@ class WHZMortalityObserver(MortalityObserver):
             ylls = get_years_of_life_lost(pop_for_cat, self.config.to_dict(), self.start_time, self.clock(),
                                           self.age_bins, self.life_expectancy, self.causes)
 
-            deaths = {key + f'_in_whz_{cat}': value for key, value in deaths.items()}
-            ylls = {key + f'_in_whz_{cat}': value for key, value in ylls.items()}
+            deaths = {key + f'_in_{cat}': value for key, value in deaths.items()}
+            ylls = {key + f'_in_{cat}': value for key, value in ylls.items()}
 
-            # metrics.update(person_time)
             metrics.update(deaths)
             metrics.update(ylls)
 
