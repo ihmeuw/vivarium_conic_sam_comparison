@@ -7,6 +7,7 @@ class SampleHistoryObserver:
         'metrics': {
             'sample_history_observer': {
                 'sample_size': 1000,
+                'fraction_initial_pop': 0.75,  # complement taken from born-in pop
                 'path': f'/share/costeffectiveness/results/vivarium_conic_sam_comparison/sample_history.hdf'
             }
         }
@@ -22,11 +23,22 @@ class SampleHistoryObserver:
 
     def setup(self, builder):
         self.clock = builder.time.clock()
-        self.sample_history_parameters = builder.configuration.metrics.sample_history_observer
+        self.sample_size = builder.configuration.metrics.sample_history_observer['sample_size']
+        self.fraction_initial_pop = builder.configuration.metrics.sample_history_observer['fraction_initial_pop']
+        # assume relatively constant births over time.
+        sim_start = pd.Timestamp(**builder.configuration.time.start)
+        sim_end = pd.Timestamp(**builder.configuration.time.end)
+        step_size = pd.Timedelta(days=builder.configuration.time.step_size)
+        self.num_samples_each_step = (self.sample_size
+                                      * (1. - self.fraction_initial_pop) / ((sim_start - sim_end) / step_size))
+
+        self.path = builder.configuration.metrics.sample_history_observer['path']
         self.randomness = builder.randomness.get_stream("sample_history")
 
-        # sets the sample index
-        builder.population.initializes_simulants(self.get_sample_index)
+        self.sample_index = pd.Index([])
+
+        # sample from the initial pool and people born in to sim
+        builder.population.initializes_simulants(self.on_initialize_simulants)
 
         columns_required = ['alive', 'age', 'sex', 'entrance_time', 'exit_time',
                             'cause_of_death',
@@ -45,7 +57,7 @@ class SampleHistoryObserver:
 
         # keys will become column names in the output
         self.pipelines = {'mortality_rate': builder.value.get_value('mortality_rate'),
-                         'disability_weight': builder.value.get_value('disability_weight'),
+                          'disability_weight': builder.value.get_value('disability_weight'),
 
                           'child_wasting_exposure': builder.value.get_value('child_wasting.exposure'),
                           'child_wasting_raw_exposure': lambda pop_index: builder.value.get_value('child_wasting.exposure')(pop_index, skip_post_processor=True),
@@ -79,16 +91,15 @@ class SampleHistoryObserver:
 
         self.builder = builder
 
-    def get_sample_index(self, pop_data):
-        sample_size = self.sample_history_parameters.sample_size
-        if sample_size is None or sample_size > len(pop_data.index):
-            sample_size = len(pop_data.index)
-        # TODO: Do we want to sample only "interesting" simulants?
+    def on_initialize_simulants(self, pop_data):
+        """Sample from the initial pop and those born in the sim."""
         draw = self.randomness.get_draw(pop_data.index)
         priority_index = [i for d, i in sorted(zip(draw, pop_data.index), key=lambda x:x[0])]
-        # FIXME: How should we handle people born in sim? Not going to right now
-        if len(self.sample_index) == 0:
-            self.sample_index = pd.Index(priority_index[:sample_size])
+        if len(self.sample_index) == 0:  # sampling initial population
+            initial_sample_size = (self.sample_size * self.fraction_initial_pop)
+            self.sample_index = self.sample_index.append(pd.Index(priority_index[:initial_sample_size]))
+        else:
+            self.sample_index = self.sample_index.append(pd.Index(priority_index[:self.num_samples_each_step]))
 
     def record(self, event):
         pop = self.population_view.get(self.sample_index)
@@ -110,4 +121,4 @@ class SampleHistoryObserver:
 
     def dump(self, event):
         sample_history = pd.concat(self.history_snapshots, axis=0)
-        sample_history.to_hdf(self.sample_history_parameters.path, key='histories')
+        sample_history.to_hdf(self.path, key='histories')
