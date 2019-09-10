@@ -66,14 +66,15 @@ def generate_spec_from_template(template, locations, project_name):
     vivarium_conic_sam_comparison, this should be India, Bangladesh, Pakistan,
     Malawi, Tanzania, and Mali.
     """
-    with open(template, 'r') as infile:
+    template = Path(template)
+    with template.open() as infile:
         temp = Template(infile.read())
 
         # loc_list = coerce_loc_list(loc_list)
         validate_locations(locations)
         for loc in locations:
             # TODO: handle locations with spaces/odd characters
-            with open(f'{project_name}_{loc}.yaml', 'w+') as outfile:
+            with open(f'{template.stem}_{loc}.yaml', 'w+') as outfile:
                 outfile.write(temp.render(
                     location=loc
                 ))
