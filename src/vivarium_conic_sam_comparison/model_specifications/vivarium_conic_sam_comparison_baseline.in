@@ -205,20 +205,13 @@ configuration:
 
     metrics:
         disability:
-            by_age: False
-            by_sex: False
+            by_age: True
+            by_sex: True
             by_year: False
             by_whz: True
         mortality:
-            by_age: False
-            by_sex: False
+            by_age: True
+            by_sex: True
             by_year: False
             by_whz: True
-        child_stunting_observer:
-            by_age: False
-            by_sex: False
-            by_year: False
-        child_wasting_observer:
-            by_age: False
-            by_sex: False
-            by_year: False
+
