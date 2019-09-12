@@ -98,111 +98,112 @@ configuration:
         mortality : True
         recoverable : True
 
-    BEP_intervention:
-        coverage_proportion: 0.8
-        start_date:
-            year: 2020
-            month: 1
-            day: 15
+    interventions:
+        BEP_intervention:
+            coverage_proportion: 0.8
+            start_date:
+                year: 2020
+                month: 1
+                day: 15
 
-        effect_on_low_birth_weight_and_short_gestation:  # Only affects bw
-            population:
-                mean: 100.0
-                sd: 0.0
-            individual:
-                sd: 0.0
-            ramp_up_duration: 0  # Days
-            full_effect_duration: permanent  # Days or permanent
-            ramp_down_duration: 0  # Days
-        effect_on_child_wasting:
-            population:
-                mean: 0.3
-                sd: 0.0
-            individual:
-                sd: 0.0
-            ramp_up_duration: 0  # Days
-            full_effect_duration: permanent  # Days or permanent
-            ramp_down_duration: 0  # Days
-        effect_on_child_stunting:
-            population:
-                mean: 0.3
-                sd: 0.0
-            individual:
-                sd: 0.0
-            ramp_up_duration: 0  # Days
-            full_effect_duration: permanent  # Days or permanent
-            ramp_down_duration: 0  # Days
+            effect_on_low_birth_weight_and_short_gestation:  # Only affects bw
+                population:
+                    mean: 100.0
+                    sd: 0.0
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 0  # Days
+                full_effect_duration: permanent  # Days or permanent
+                ramp_down_duration: 0  # Days
+            effect_on_child_wasting:
+                population:
+                    mean: 0.3
+                    sd: 0.0
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 0  # Days
+                full_effect_duration: permanent  # Days or permanent
+                ramp_down_duration: 0  # Days
+            effect_on_child_stunting:
+                population:
+                    mean: 0.3
+                    sd: 0.0
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 0  # Days
+                full_effect_duration: permanent  # Days or permanent
+                ramp_down_duration: 0  # Days
 
-    SQ_LNS_intervention:  # No one can be treated multiple times
-        whz_target: all   # Z-score float or "all". WHZ <= target are eligible
-        coverage_proportion: 0.8
-        treatment_duration: 180  # Days
-        start_date:
-            year: 2020
-            month: 1
-            day: 15
-        treatment_age:
-           start: 0.5
-           end: 1.0
+        SQ_LNS_intervention:  # No one can be treated multiple times
+            whz_target: all   # Z-score float or "all". WHZ <= target are eligible
+            coverage_proportion: 0.8
+            treatment_duration: 180  # Days
+            start_date:
+                year: 2020
+                month: 1
+                day: 15
+            treatment_age:
+               start: 0.5
+               end: 1.0
 
-        effect_on_child_wasting:
-            population:
-                mean: 0.07
-                sd: 0.041
-            individual:
-                sd: 0.0
-            ramp_up_duration: 60  # Days. Two months
-            full_effect_duration: permanent # Days or permanent.
-            ramp_down_duration: 60  # Days. Two months
-        effect_on_child_stunting:
-            population:
-                mean: 0.10
-                sd: 0.051
-            individual:
-                sd: 0.0
-            ramp_up_duration: 60  # Days. Two months
-            full_effect_duration: permanent # Days or permanent. One year minus two months
-            ramp_down_duration: 60  # Days. Two months
-        effect_on_iron_deficiency:
-            population:
-                mean: 0.0
-                sd: 0.0
-            individual:
-                sd: 0.0
-            ramp_up_duration: 60  # Days. Two months
-            full_effect_duration: 305.25 # Days or permanent. One year minus two months
-            ramp_down_duration: 60  # Days. Two months
+            effect_on_child_wasting:
+                population:
+                    mean: 0.07
+                    sd: 0.041
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 60  # Days. Two months
+                full_effect_duration: permanent # Days or permanent.
+                ramp_down_duration: 60  # Days. Two months
+            effect_on_child_stunting:
+                population:
+                    mean: 0.10
+                    sd: 0.051
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 60  # Days. Two months
+                full_effect_duration: permanent # Days or permanent. One year minus two months
+                ramp_down_duration: 60  # Days. Two months
+            effect_on_iron_deficiency:
+                population:
+                    mean: 0.0
+                    sd: 0.0
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 60  # Days. Two months
+                full_effect_duration: 305.25 # Days or permanent. One year minus two months
+                ramp_down_duration: 60  # Days. Two months
 
-    TF_SAM_intervention:  # No one can be treated multiple times
-        whz_target: -3.0  # Z-score float or "all". WHZ <= target are eligible
-        coverage_proportion: 0.8
-        treatment_duration: 7  # Days
-        start_date:
-            year: 2020
-            month: 1
-            day: 15
-        treatment_age:
-           start: 0.5
-           end: 5.0
+        TF_SAM_intervention:  # No one can be treated multiple times
+            whz_target: -3.0  # Z-score float or "all". WHZ <= target are eligible
+            coverage_proportion: 0.8
+            treatment_duration: 7  # Days
+            start_date:
+                year: 2020
+                month: 1
+                day: 15
+            treatment_age:
+               start: 0.5
+               end: 5.0
 
-        effect_on_child_wasting:
-            population:
-                mean: 0.4
-                sd: 0.0
-            individual:
-                sd: 0.0
-            ramp_up_duration: 7  # Days. One week
-            full_effect_duration: permanent  # Days or permanent.
-            ramp_down_duration: 14  # Days. Two weeks
-        effect_on_child_stunting:
-            population:
-                mean: 0.4
-                sd: 0.0
-            individual:
-                sd: 0.0
-            ramp_up_duration: 7  # Days. One week
-            full_effect_duration: permanent  # Days or permanent.
-            ramp_down_duration: 14  # Days. Two weeks
+            effect_on_child_wasting:
+                population:
+                    mean: 0.4
+                    sd: 0.0
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 7  # Days. One week
+                full_effect_duration: permanent  # Days or permanent.
+                ramp_down_duration: 14  # Days. Two weeks
+            effect_on_child_stunting:
+                population:
+                    mean: 0.4
+                    sd: 0.0
+                individual:
+                    sd: 0.0
+                ramp_up_duration: 7  # Days. One week
+                full_effect_duration: permanent  # Days or permanent.
+                ramp_down_duration: 14  # Days. Two weeks
 
     metrics:
         disability:
