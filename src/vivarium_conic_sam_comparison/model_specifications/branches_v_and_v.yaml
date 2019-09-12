@@ -1,3 +1,23 @@
 input_draw_count: 20
 random_seed_count: 5
 
+branches:
+    # Baseline
+    - interventions:
+        BEP_intervention:
+            coverage_proportion: 0.0
+        SQ_LNS_intervention:
+            coverage_proportion: 0.0
+        TF_SAM_intervention:
+            coverage_proportion: 0.0
+        metrics:
+            disability:
+                by_age: True
+                by_sex: True
+                by_year: False
+                by_whz: True
+            mortality:
+                by_age: True
+                by_sex: True
+                by_year: False
+                by_whz: True
