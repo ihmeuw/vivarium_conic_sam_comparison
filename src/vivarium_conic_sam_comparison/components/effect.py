@@ -51,7 +51,7 @@ class InterventionEffect:
         return f'{self.intervention_name}_effect_on_{self.target.name}'
 
     def setup(self, builder):
-        config = builder.configuration[f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
+        config = builder.configuration["interventions"][f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
 
         self.ramp_up_duration = pd.Timedelta(days=config['ramp_up_duration'])
         self.permanent = True if config['full_effect_duration'] == 'permanent' else False

@@ -27,7 +27,7 @@ class MaternalTreatmentAlgorithm:
         return f'{self.intervention_name}_treatment_algorithm'
 
     def setup(self, builder):
-        config = builder.configuration[f"{self.intervention_name}_intervention"]
+        config = builder.configuration["interventions"][f"{self.intervention_name}_intervention"]
         self.clock = builder.time.clock()
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.proportion = config['coverage_proportion']
@@ -85,7 +85,7 @@ class NeonatalTreatmentAlgorithm:
         return f"{self.intervention_name}_treatment_algorithm"
 
     def setup(self, builder):
-        config = builder.configuration[f"{self.intervention_name}_intervention"]
+        config = builder.configuration["interventions"][f"{self.intervention_name}_intervention"]
         self.whz_target = config['whz_target']
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.treatment_age = config['treatment_age']
