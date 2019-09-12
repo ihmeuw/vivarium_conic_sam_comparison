@@ -4,29 +4,30 @@ import pandas as pd
 
 
 class MaternalTreatmentAlgorithm:
-
     configuration_defaults = {
-        "maternal_intervention": {
-            "coverage_proportion": 0.8,
-            "start_date": {
-                "year": 2020,
-                "month": 1,
-                "day": 1
-            },
+        "interventions": {
+            "maternal_intervention": {
+                "coverage_proportion": 0.8,
+                "start_date": {
+                    "year": 2020,
+                    "month": 1,
+                    "day": 1
+                },
+            }
         }
     }
 
     def __init__(self, intervention_name: str):
         self.intervention_name = intervention_name
-        self.configuration_defaults = {f"{self.intervention_name}_intervention":
-                                       MaternalTreatmentAlgorithm.configuration_defaults['maternal_intervention']}
+        self.configuration_defaults = {"interventions": {f"{self.intervention_name}_intervention":
+            MaternalTreatmentAlgorithm.configuration_defaults['interventions']['maternal_intervention']}}
 
     @property
     def name(self):
         return f'{self.intervention_name}_treatment_algorithm'
 
     def setup(self, builder):
-        config = builder.configuration[f"{self.intervention_name}_intervention"]
+        config = builder.configuration["interventions"][f"{self.intervention_name}_intervention"]
         self.clock = builder.time.clock()
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.proportion = config['coverage_proportion']
@@ -55,35 +56,36 @@ class MaternalTreatmentAlgorithm:
 
 
 class NeonatalTreatmentAlgorithm:
-
     configuration_defaults = {
-        "neonatal_intervention": {
-            "whz_target": "all",  # Z-score float or 'all'. Sims at or below eligible
-            "coverage_proportion": 0.8,
-            "treatment_duration": 365.25,  # days
-            "start_date": {
-                "year": 2020,
-                "month": 1,
-                "day": 1
-            },
-            "treatment_age": {
-                "start": 0.5,
-                "end": 1.0
-            },
+        "interventions": {
+            "neonatal_intervention": {
+                "whz_target": "all",  # Z-score float or 'all'. Sims at or below eligible
+                "coverage_proportion": 0.8,
+                "treatment_duration": 365.25,  # days
+                "start_date": {
+                    "year": 2020,
+                    "month": 1,
+                    "day": 1
+                },
+                "treatment_age": {
+                    "start": 0.5,
+                    "end": 1.0
+                },
+            }
         }
     }
 
     def __init__(self, intervention_name: str):
         self.intervention_name = intervention_name
-        self.configuration_defaults = {f"{self.intervention_name}_intervention":
-                                       NeonatalTreatmentAlgorithm.configuration_defaults['neonatal_intervention']}
+        self.configuration_defaults = {"interventions": {f"{self.intervention_name}_intervention":
+            NeonatalTreatmentAlgorithm.configuration_defaults['interventions']['neonatal_intervention']}}
 
     @property
     def name(self):
         return f"{self.intervention_name}_treatment_algorithm"
 
     def setup(self, builder):
-        config = builder.configuration[f"{self.intervention_name}_intervention"]
+        config = builder.configuration["interventions"][f"{self.intervention_name}_intervention"]
         self.whz_target = config['whz_target']
         self.start_date = pd.Timestamp(**config['start_date'].to_dict())
         self.treatment_age = config['treatment_age']
@@ -147,4 +149,3 @@ class NeonatalTreatmentAlgorithm:
         eligible_mask &= pd.isnull(pop[f'{self.intervention_name}_treatment_start'])
 
         return self.enrollment_randomness.filter_for_probability(pop.loc[eligible_mask].index, self.coverage)
-

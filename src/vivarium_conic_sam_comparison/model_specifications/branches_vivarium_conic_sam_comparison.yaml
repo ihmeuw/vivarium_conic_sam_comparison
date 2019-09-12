@@ -1,5 +1,36 @@
-input_draw_count: 10
-random_seed_count: 5
+input_draw_count: 100
+random_seed_count: 10
 
 branches:
-    
+    # Baseline
+    - interventions:
+        BEP_intervention:
+            coverage_proportion: 0.0
+        SQ_LNS_intervention:
+            coverage_proportion: 0.0
+        TF_SAM_intervention:
+            coverage_proportion: 0.0
+    # BEP
+    - interventions:
+        BEP_intervention:
+            coverage_proportion: 0.8
+        SQ_LNS_intervention:
+            coverage_proportion: 0.0
+        TF_SAM_intervention:
+            coverage_proportion: 0.0
+    # SQ LNS
+    - interventions:
+        BEP_intervention:
+            coverage_proportion: 0.0
+        SQ_LNS_intervention:
+            coverage_proportion: 0.8
+        TF_SAM_intervention:
+            coverage_proportion: 0.0
+    # TF-SAM
+    - interventions:
+        BEP_intervention:
+            coverage_proportion: 0.0
+        SQ_LNS_intervention:
+            coverage_proportion: 0.0
+        TF_SAM_intervention:
+            coverage_proportion: 0.8

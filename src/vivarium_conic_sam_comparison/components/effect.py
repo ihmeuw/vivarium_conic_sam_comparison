@@ -20,18 +20,20 @@ class InterventionEffect:
     and require no other information.
     """
     configuration_defaults = {
-        "intervention": {
-            "effect": {
-                "population": {
-                    "mean": 0.0,
-                    "sd": 0.0
-                },
-                "individual": {
-                    "sd": 0.0
-                },
-                "ramp_up_duration": 0,  # Length of logistic ramp up in days.
-                "full_effect_duration": 28,  # Length of full effect in days, or 'permanent'.
-                "ramp_down_duration": 0,  # Length of logistic ramp down in days.
+        "interventions": {
+            "specific_intervention": {
+                "effect": {
+                    "population": {
+                        "mean": 0.0,
+                        "sd": 0.0
+                    },
+                    "individual": {
+                        "sd": 0.0
+                    },
+                    "ramp_up_duration": 0,  # Length of logistic ramp up in days.
+                    "full_effect_duration": 28,  # Length of full effect in days, or 'permanent'.
+                    "ramp_down_duration": 0,  # Length of logistic ramp down in days.
+                }
             }
         }
     }
@@ -39,16 +41,17 @@ class InterventionEffect:
     def __init__(self, intervention_name: str, target: str):
         self.intervention_name = intervention_name
         self.target = TargetString(target)
-        self.configuration_defaults = {f"{self.intervention_name}_intervention":
-                                       {f'effect_on_{self.target.name}':
-                                        InterventionEffect.configuration_defaults['intervention']['effect']}}
+        self.configuration_defaults = {"interventions": {
+            f"{self.intervention_name}_intervention": {
+                f'effect_on_{self.target.name}':
+                    InterventionEffect.configuration_defaults['interventions']['specific_intervention']['effect']}}}
 
     @property
     def name(self):
         return f'{self.intervention_name}_effect_on_{self.target.name}'
 
     def setup(self, builder):
-        config = builder.configuration[f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
+        config = builder.configuration["interventions"][f"{self.intervention_name}_intervention"][f'effect_on_{self.target.name}']
 
         self.ramp_up_duration = pd.Timedelta(days=config['ramp_up_duration'])
         self.permanent = True if config['full_effect_duration'] == 'permanent' else False
