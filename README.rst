@@ -33,7 +33,7 @@ run::
     $> conda create --name=vivarium_conic_sam_comparison python=3.6
     ...standard conda install stuff...
     $> conda activate vivarium_conic_sam_comparison
-    (vivarium_conic_sam_comparison) $> conda install redis
+    (vivarium_conic_sam_comparison) $> conda install redis mysql
     (vivarium_conic_sam_comparison) $> git clone git@github.com:ihmeuw/vivarium_conic_sam_comparison.git
     ...you may need to do username/password stuff here...
     (vivarium_conic_sam_comparison) $> cd vivarium_conic_sam_comparison
